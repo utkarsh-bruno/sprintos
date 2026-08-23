@@ -1,16 +1,24 @@
 import type { AppConfig } from '@sprintos/types';
+import { parsePrUrls } from './pr-parser.js';
 
 type JiraConfig = AppConfig['jira'];
 
 interface JiraIssue {
+  id: string;
   key: string;
   fields?: Record<string, unknown>;
 }
 
-interface JiraSprintRef {
+export interface JiraSprintRef {
   id: number;
   name: string;
   state: 'active' | 'future' | 'closed';
+}
+
+export interface JiraSprintMeta {
+  name: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface JiraTeamRef {
@@ -24,13 +32,19 @@ export interface JiraUserRef {
   email?: string;
 }
 
-export interface JiraIssueSnapshot {
-  jiraId: string;
-  summary?: string;
-  status?: string;
+export interface JiraTicketRaw {
+  id: string;
+  key: string;
+  summary: string;
+  status: string;
+  statusCategory?: string;
+  priority?: string;
+  storyPoints: number;
+  assignee?: { accountId: string; displayName: string };
   team?: string;
-  assignee?: string;
-  storyPoints?: number;
+  sprintId: string;
+  jiraUpdatedAt: string;
+  prUrls: string[];
 }
 
 function assertConfigured(config: JiraConfig) {
@@ -68,6 +82,26 @@ function teamRefs(value: unknown): JiraTeamRef[] {
   return [];
 }
 
+function storyPointsFromFields(fields: Record<string, unknown>, storyPointFields: string[]): number {
+  const value = storyPointFields
+    .map((f) => fields[f])
+    .find((v): v is number => typeof v === 'number');
+  return value ?? 1;
+}
+
+function sprintIssueFields(config: JiraConfig): string {
+  return [
+    'summary',
+    'status',
+    'priority',
+    'assignee',
+    'updated',
+    config.teamField,
+    config.prField,
+    ...config.storyPointFields,
+  ].join(',');
+}
+
 // The Agile /board/{id}/sprint listing came back empty on this instance's
 // scrum boards (permission or board-linking gap, not worth chasing) — reading
 // sprint refs directly off recent issues' Sprint field works reliably instead.
@@ -97,6 +131,26 @@ export async function listSprints(config: JiraConfig): Promise<JiraSprintRef[]> 
   return [...byId.values()].sort(
     (a, b) => STATE_ORDER[a.state] - STATE_ORDER[b.state] || b.id - a.id
   );
+}
+
+export async function fetchActiveSprint(config: JiraConfig): Promise<JiraSprintRef | null> {
+  const sprints = await listSprints(config);
+  return sprints.find((sprint) => sprint.state === 'active') ?? null;
+}
+
+export async function fetchSprintMeta(config: AppConfig, jiraSprintId: number): Promise<JiraSprintMeta> {
+  const res = await fetch(`${jiraBase(config.jira)}/rest/agile/1.0/sprint/${jiraSprintId}`, {
+    headers: authHeaders(config.jira)
+  });
+  if (!res.ok) {
+    throw new Error(`Jira request failed: ${res.status} ${res.statusText}`);
+  }
+  const data = (await res.json()) as { name?: unknown; startDate?: unknown; endDate?: unknown };
+  return {
+    name: typeof data.name === 'string' ? data.name : '',
+    ...(typeof data.startDate === 'string' ? { startDate: data.startDate } : {}),
+    ...(typeof data.endDate === 'string' ? { endDate: data.endDate } : {}),
+  };
 }
 
 // Jira does not expose a universal Teams endpoint. The configured team custom
@@ -132,16 +186,21 @@ export async function listUsers(config: JiraConfig, query = ''): Promise<JiraUse
   }));
 }
 
-export async function fetchSprintIssues(config: JiraConfig, jiraSprintId: number): Promise<JiraIssueSnapshot[]> {
-  const base = jiraBase(config);
-  const headers = authHeaders(config);
+export async function fetchSprintTickets(
+  config: AppConfig,
+  jiraSprintId: number,
+  sprintId: string
+): Promise<JiraTicketRaw[]> {
+  const base = jiraBase(config.jira);
+  const headers = authHeaders(config.jira);
+  const fields = sprintIssueFields(config.jira);
   const issues: JiraIssue[] = [];
   let startAt = 0;
   const maxResults = 50;
 
   while (true) {
     const res = await fetch(
-      `${base}/rest/agile/1.0/sprint/${jiraSprintId}/issue?startAt=${startAt}&maxResults=${maxResults}`,
+      `${base}/rest/agile/1.0/sprint/${jiraSprintId}/issue?startAt=${startAt}&maxResults=${maxResults}&fields=${encodeURIComponent(fields)}`,
       { headers }
     );
     if (!res.ok) {
@@ -153,14 +212,28 @@ export async function fetchSprintIssues(config: JiraConfig, jiraSprintId: number
     if (page.issues.length === 0 || startAt >= page.total) break;
   }
 
-  return issues.map((issue) => ({
-    jiraId: issue.key,
-    summary: typeof issue.fields?.summary === 'string' ? issue.fields.summary : undefined,
-    status: (issue.fields?.status as { name?: string } | undefined)?.name,
-    team: teamRefs(issue.fields?.[config.teamField])[0]?.name,
-    assignee: (issue.fields?.assignee as { displayName?: string } | null | undefined)?.displayName,
-    storyPoints: config.storyPointFields
-      .map((f) => issue.fields?.[f])
-      .find((v): v is number => typeof v === 'number'),
-  }));
+  return issues.map((issue) => {
+    const issueFields = issue.fields ?? {};
+    const status = issueFields.status as { name?: string; statusCategory?: { name?: string } } | undefined;
+    const assignee = issueFields.assignee as { accountId?: string; displayName?: string } | null | undefined;
+    const priority = issueFields.priority as { name?: string } | undefined;
+    const team = teamRefs(issueFields[config.jira.teamField])[0]?.name;
+
+    return {
+      id: issue.id,
+      key: issue.key,
+      summary: typeof issueFields.summary === 'string' ? issueFields.summary : '',
+      status: status?.name ?? '',
+      ...(status?.statusCategory?.name ? { statusCategory: status.statusCategory.name } : {}),
+      ...(priority?.name ? { priority: priority.name } : {}),
+      storyPoints: storyPointsFromFields(issueFields, config.jira.storyPointFields),
+      ...(assignee?.accountId && assignee.displayName
+        ? { assignee: { accountId: assignee.accountId, displayName: assignee.displayName } }
+        : {}),
+      ...(team ? { team } : {}),
+      sprintId,
+      jiraUpdatedAt: typeof issueFields.updated === 'string' ? issueFields.updated : '',
+      prUrls: parsePrUrls(issueFields[config.jira.prField]),
+    };
+  });
 }

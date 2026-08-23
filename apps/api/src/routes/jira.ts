@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { readAppConfig } from '../lib/config.js';
-import { listSprints, listTeams, listUsers } from '../lib/jira.js';
+import { listSprints, listTeams, listUsers } from '../integrations/jira.js';
 
 export async function jiraRoutes(app: FastifyInstance) {
   app.get('/api/jira/sprints', async () => {
