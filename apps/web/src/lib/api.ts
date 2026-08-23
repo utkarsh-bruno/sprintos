@@ -1,4 +1,4 @@
-import type { AppConfig, BriefItem, BriefPayload, ChangeEvent, PlanningMode, PlanningOverride, Ticket, TicketFlag } from '@sprintos/types';
+import type { AppConfig, BriefItem, BriefPayload, ChangeEvent, PlanningMode, PlanningOverride, SyncStatus, Ticket, TicketFlag } from '@sprintos/types';
 
 export type TicketFilter =
   | 'all'
@@ -55,6 +55,7 @@ export const api = {
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
   getBrief: () => request<BriefPayload>('/brief'),
+  getStatus: () => request<SyncStatus>('/status'),
   sync: () => request<BriefPayload>('/sync', { method: 'POST', body: '{}' }),
   getChanges: () => request<ChangesResponse>('/changes'),
   getConfig: () => request<AppConfig>('/config'),

@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { BriefPayload, ChangeEvent, ForecastRow } from '@sprintos/types';
 import { api } from '../lib/api.js';
+import { EmptySyncState } from '../components/EmptySyncState.js';
+import { SyncBanner } from '../components/SyncBanner.js';
 
 function formatChange(event: ChangeEvent): string {
   const label = event.type.replace(/_/g, ' ');
@@ -24,25 +26,6 @@ function forecastBarColor(status: ForecastRow['status']): string {
   }
 }
 
-function SyncBanner({ brief }: { brief: BriefPayload }) {
-  const { sync } = brief;
-  if (sync.status === 'failed' && sync.errorMessage) {
-    return (
-      <div className="rounded-xl border border-rose-500/40 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
-        Sync failed: {sync.errorMessage}
-      </div>
-    );
-  }
-  if (sync.status === 'partial') {
-    return (
-      <div className="rounded-xl border border-amber-500/40 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
-        Partial sync — {sync.errorMessage ?? 'Some data may be incomplete (e.g. GitHub PR metadata).'}
-      </div>
-    );
-  }
-  return null;
-}
-
 export default function Current() {
   const queryClient = useQueryClient();
 
@@ -57,12 +40,22 @@ export default function Current() {
     retry: false,
   });
 
+  const { data: syncStatus } = useQuery({
+    queryKey: ['status'],
+    queryFn: () => api.getStatus(),
+    refetchInterval: (query) => (query.state.data?.status === 'syncing' ? 2000 : false),
+  });
+
   const syncMutation = useMutation({
     mutationFn: () => api.sync(),
     onSuccess: (data) => {
       queryClient.setQueryData(['brief'], data);
+      queryClient.invalidateQueries({ queryKey: ['status'] });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
   });
+
+  const bannerSync = syncStatus ?? brief?.sync;
 
   if (isLoading) {
     return (
@@ -79,30 +72,26 @@ export default function Current() {
         <section className="app-header">
           <div>
             <h2 className="text-base font-semibold text-slate-100">Sprint brief</h2>
-            <p className="text-sm text-slate-400">No sync data yet</p>
-          </div>
-          <button
-            type="button"
-            className="button button-primary"
-            disabled={syncMutation.isPending}
-            onClick={() => syncMutation.mutate()}
-          >
-            {syncMutation.isPending ? 'Syncing…' : 'Sync'}
-          </button>
-        </section>
-        {syncMutation.isError && (
-          <div className="rounded-xl border border-rose-500/40 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
-            {syncMutation.error instanceof Error ? syncMutation.error.message : 'Sync failed'}
-          </div>
-        )}
-        <section className="panel">
-          <div className="panel-heading">Current</div>
-          <div className="px-5 py-8 text-center">
-            <p className="text-sm text-slate-400">
-              {error instanceof Error ? error.message : 'Run Sync to fetch Jira sprint data.'}
-            </p>
+            <p className="text-sm text-slate-400">Sprint control cockpit</p>
           </div>
         </section>
+        {bannerSync && <SyncBanner sync={bannerSync} />}
+        <EmptySyncState
+          message={
+            error instanceof Error && !error.message.includes('404')
+              ? error.message
+              : 'No sync data yet.'
+          }
+          onSync={() => syncMutation.mutate()}
+          syncing={syncMutation.isPending}
+          syncError={
+            syncMutation.isError
+              ? syncMutation.error instanceof Error
+                ? syncMutation.error.message
+                : 'Sync failed'
+              : null
+          }
+        />
       </div>
     );
   }
@@ -138,20 +127,20 @@ export default function Current() {
           <button
             type="button"
             className="button button-primary"
-            disabled={syncMutation.isPending || sync.status === 'syncing'}
+            disabled={syncMutation.isPending || syncStatus?.status === 'syncing'}
             onClick={() => syncMutation.mutate()}
           >
-            {syncMutation.isPending || sync.status === 'syncing' ? 'Syncing…' : 'Sync'}
+            {syncMutation.isPending || syncStatus?.status === 'syncing' ? 'Syncing…' : 'Sync'}
           </button>
-          {sync.lastSyncAt && (
+          {(syncStatus?.lastSyncAt ?? sync.lastSyncAt) && (
             <p className="text-xs text-slate-500">
-              Last sync {new Date(sync.lastSyncAt).toLocaleString()}
+              Last sync {new Date((syncStatus?.lastSyncAt ?? sync.lastSyncAt)!).toLocaleString()}
             </p>
           )}
         </div>
       </section>
 
-      <SyncBanner brief={brief} />
+      {bannerSync && <SyncBanner sync={bannerSync} />}
       {syncMutation.isError && (
         <div className="rounded-xl border border-rose-500/40 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
           {syncMutation.error instanceof Error ? syncMutation.error.message : 'Sync failed'}

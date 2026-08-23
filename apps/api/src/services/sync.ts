@@ -256,7 +256,14 @@ export async function runSync(): Promise<BriefPayload> {
 export function getSyncStatus(): SyncStatus {
   const sprint = getLatestSprint();
   const latest = getLatestSyncRun();
-  return buildSyncStatusFromRun(sprint, latest);
+  const lastSuccess = getLatestSuccessfulSyncRun();
+  const status = buildSyncStatusFromRun(sprint, latest);
+
+  if (lastSuccess?.completed_at && !status.lastSuccessAt) {
+    status.lastSuccessAt = lastSuccess.completed_at;
+  }
+
+  return status;
 }
 
 export async function getLatestBrief(): Promise<BriefPayload | null> {
