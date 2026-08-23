@@ -3,7 +3,65 @@
     "url": "https://usebruno.atlassian.net",
     "email": "",
     "token": "",
-    "teamField": "customfield_10392"
+    "teamField": "customfield_10392",
+    "prField": "customfield_10454",
+    "sprintField": "customfield_10020",
+    "storyPointFields": ["customfield_10016", "customfield_11204"]
   },
-  "teams": []
+  "github": {
+    "token": ""
+  },
+  "repos": {
+    "oss": ["usebruno/bruno"],
+    "enterprise": ["teambruno/bruno-enterprise-edition"]
+  },
+  "people": {
+    "lead": {
+      "jiraAccountId": "",
+      "actsAsDeveloper": true
+    },
+    "additionalReview": {
+      "jiraAccountId": ""
+    }
+  },
+  "roles": {
+    "pmLabel": "PM",
+    "additionalReviewLabel": "Additional Review"
+  },
+  "statusOwnerMap": {
+    "Planning": "product",
+    "To Do": "product",
+    "In Progress": "developer",
+    "In Review": "lead",
+    "QA": "qa",
+    "Testing": "qa",
+    "Done": "done"
+  },
+  "sprint": {
+    "workingDays": 10,
+    "freezeDay": 8,
+    "hoursPerPoint": 5,
+    "capacity": {
+      "developerHoursPerDay": 5,
+      "leadReviewHoursPerDay": 3,
+      "additionalReviewHoursPerDay": 2,
+      "qaHoursPerDay": 5
+    },
+    "thresholds": {
+      "developerPrExpectedByDay": 6,
+      "leadReviewSlaWorkingDays": 1,
+      "staleWatchDays": 1,
+      "staleWarningDays": 2,
+      "staleUrgentDays": 3
+    },
+    "estimates": {
+      "baseReviewHours": 0.5,
+      "mergeHours": 0.5,
+      "fileReviewFactor": 0.05,
+      "maxFileReviewFactor": 1.5,
+      "linesPerReviewUnit": 500,
+      "lineReviewFactor": 0.25,
+      "maxLineReviewFactor": 2
+    }
+  }
 }
