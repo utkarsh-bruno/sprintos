@@ -43,6 +43,7 @@ export interface Ticket {
   priority?: string;
   storyPoints: number;
   assignee?: PersonRef;
+  qaAssignee?: PersonRef;
   team?: string;
   sprintId: string;
   sprintDayCreated?: number;
@@ -99,6 +100,16 @@ export interface SprintConfig {
   };
 }
 
+export type TeamMemberRole = 'developer' | 'qa' | 'lead' | 'merge' | 'product';
+
+export interface TeamMember {
+  jiraAccountId: string;
+  displayName: string;
+  roles: TeamMemberRole[];
+  /** Defaults to sprint.capacity.developerHoursPerDay when unset. */
+  hoursPerDay?: number;
+}
+
 export interface AppConfig {
   jira: {
     url: string;
@@ -108,6 +119,14 @@ export interface AppConfig {
     prField: string;
     sprintField: string;
     storyPointFields: string[];
+    /** When set, only consider sprints and tickets from this Jira project (e.g. BRU). */
+    projectKey?: string;
+    /** When set, only sync tickets assigned to this Jira team (customfield_10392). */
+    teamName?: string;
+    /** When set, sync this Jira sprint instead of auto-picking the first active one. */
+    activeSprintId?: number;
+    /** Jira user picker for QA assignee (e.g. customfield_10727). */
+    qaField?: string;
   };
   github: { token: string };
   repos: { oss: string[]; enterprise: string[] };
@@ -118,6 +137,7 @@ export interface AppConfig {
   roles: { pmLabel: string; additionalReviewLabel: string };
   statusOwnerMap: Record<string, OwnerParty>;
   sprint: SprintConfig;
+  teamMembers?: TeamMember[];
 }
 
 export interface ChangeEvent {
@@ -156,6 +176,8 @@ export interface SyncStatus {
   sprint?: Sprint;
   sprintDay?: number;
   workingDaysUntilFreeze?: number;
+  /** Jira status names seen on tickets but missing from statusOwnerMap. */
+  unmappedStatuses?: string[];
 }
 
 export interface BriefPayload {
@@ -164,6 +186,7 @@ export interface BriefPayload {
   needsMe: BriefItem[];
   attentionByParty: Record<string, number>;
   forecast: ForecastRow[];
+  personForecast: ForecastRow[];
   todaysCalls: BriefItem[];
   overallLabel?: string;
   overallReason?: string;
@@ -180,5 +203,5 @@ export interface ForecastRow {
   loadHours: number;
   capacityHours: number;
   utilizationPct: number;
-  status: 'ok' | 'tight' | 'bottleneck';
+  status: 'ok' | 'tight' | 'overload';
 }

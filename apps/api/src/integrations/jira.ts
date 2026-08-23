@@ -41,6 +41,7 @@ export interface JiraTicketRaw {
   priority?: string;
   storyPoints: number;
   assignee?: { accountId: string; displayName: string };
+  qaAssignee?: { accountId: string; displayName: string };
   team?: string;
   sprintId: string;
   jiraUpdatedAt: string;
@@ -89,8 +90,51 @@ function storyPointsFromFields(fields: Record<string, unknown>, storyPointFields
   return value ?? 1;
 }
 
+function userRef(value: unknown): { accountId: string; displayName: string } | undefined {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  if (!candidate || typeof candidate !== 'object') return undefined;
+  const user = candidate as { accountId?: string; displayName?: string };
+  if (!user.accountId || !user.displayName) return undefined;
+  return { accountId: user.accountId, displayName: user.displayName };
+}
+
+function projectJqlClause(config: JiraConfig): string {
+  const key = config.projectKey?.trim();
+  return key ? `project = ${key} AND ` : '';
+}
+
+function issueInProject(key: string, config: JiraConfig): boolean {
+  const projectKey = config.projectKey?.trim();
+  if (!projectKey) return true;
+  return key.toUpperCase().startsWith(`${projectKey.toUpperCase()}-`);
+}
+
+function issueMatchesTeam(fields: Record<string, unknown>, config: JiraConfig): boolean {
+  const teamName = config.teamName?.trim();
+  if (!teamName) return true;
+  const teams = teamRefs(fields[config.teamField]);
+  return teams.some((t) => t.name.toLowerCase() === teamName.toLowerCase());
+}
+
+function issueMatchesFilters(issue: JiraIssue, config: JiraConfig): boolean {
+  if (!issueInProject(issue.key, config)) return false;
+  return issueMatchesTeam(issue.fields ?? {}, config);
+}
+
+/** Filter persisted tickets by project/team config (handles stale rows from before filters applied). */
+export function ticketMatchesJiraFilters(
+  ticket: { key: string; team?: string },
+  config: JiraConfig,
+): boolean {
+  if (!issueInProject(ticket.key, config)) return false;
+  const teamName = config.teamName?.trim();
+  if (!teamName) return true;
+  if (!ticket.team) return false;
+  return ticket.team.toLowerCase() === teamName.toLowerCase();
+}
+
 function sprintIssueFields(config: JiraConfig): string {
-  return [
+  const fields = [
     'summary',
     'status',
     'priority',
@@ -99,7 +143,11 @@ function sprintIssueFields(config: JiraConfig): string {
     config.teamField,
     config.prField,
     ...config.storyPointFields,
-  ].join(',');
+  ];
+  if (config.qaField?.trim()) {
+    fields.push(config.qaField.trim());
+  }
+  return fields.join(',');
 }
 
 // The Agile /board/{id}/sprint listing came back empty on this instance's
@@ -112,9 +160,9 @@ export async function listSprints(config: JiraConfig): Promise<JiraSprintRef[]> 
     method: 'POST',
     headers: { ...authHeaders(config), 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      jql: `"Sprint" is not EMPTY ORDER BY updated DESC`,
+      jql: `${projectJqlClause(config)}"Sprint" is not EMPTY ORDER BY updated DESC`,
       maxResults: 100,
-      fields: [config.sprintField]
+      fields: [config.sprintField, config.teamField]
     })
   });
   if (!res.ok) {
@@ -124,6 +172,7 @@ export async function listSprints(config: JiraConfig): Promise<JiraSprintRef[]> 
 
   const byId = new Map<number, JiraSprintRef>();
   for (const issue of data.issues) {
+    if (!issueMatchesFilters(issue, config)) continue;
     const sprints = (issue.fields?.[config.sprintField] as JiraSprintRef[] | undefined) ?? [];
     for (const sprint of sprints) byId.set(sprint.id, sprint);
   }
@@ -135,6 +184,10 @@ export async function listSprints(config: JiraConfig): Promise<JiraSprintRef[]> 
 
 export async function fetchActiveSprint(config: JiraConfig): Promise<JiraSprintRef | null> {
   const sprints = await listSprints(config);
+  if (config.activeSprintId != null) {
+    const pinned = sprints.find((sprint) => sprint.id === config.activeSprintId);
+    if (pinned) return pinned;
+  }
   return sprints.find((sprint) => sprint.state === 'active') ?? null;
 }
 
@@ -163,14 +216,18 @@ export async function listTeams(config: JiraConfig): Promise<JiraTeamRef[]> {
     body: JSON.stringify({
       // A bare ORDER BY is rejected by Jira's JQL parser. Sprint is available
       // across this workspace and keeps discovery aligned with planning work.
-      jql: '"Sprint" is not EMPTY ORDER BY updated DESC',
+      jql: `${projectJqlClause(config)}"Sprint" is not EMPTY ORDER BY updated DESC`,
       maxResults: 100,
       fields: [config.teamField]
     })
   });
   if (!res.ok) throw new Error(`Jira request failed: ${res.status} ${res.statusText}`);
   const data = (await res.json()) as { issues: JiraIssue[] };
-  return uniqueById(data.issues.flatMap((issue) => teamRefs(issue.fields?.[config.teamField])));
+  return uniqueById(
+    data.issues
+      .filter((issue) => issueMatchesFilters(issue, config))
+      .flatMap((issue) => teamRefs(issue.fields?.[config.teamField])),
+  );
 }
 
 export async function listUsers(config: JiraConfig, query = ''): Promise<JiraUserRef[]> {
@@ -212,10 +269,15 @@ export async function fetchSprintTickets(
     if (page.issues.length === 0 || startAt >= page.total) break;
   }
 
-  return issues.map((issue) => {
+  return issues
+    .filter((issue) => issueMatchesFilters(issue, config.jira))
+    .map((issue) => {
     const issueFields = issue.fields ?? {};
     const status = issueFields.status as { name?: string; statusCategory?: { name?: string } } | undefined;
-    const assignee = issueFields.assignee as { accountId?: string; displayName?: string } | null | undefined;
+    const assignee = userRef(issueFields.assignee);
+    const qaAssignee = config.jira.qaField?.trim()
+      ? userRef(issueFields[config.jira.qaField.trim()])
+      : undefined;
     const priority = issueFields.priority as { name?: string } | undefined;
     const team = teamRefs(issueFields[config.jira.teamField])[0]?.name;
 
@@ -227,9 +289,8 @@ export async function fetchSprintTickets(
       ...(status?.statusCategory?.name ? { statusCategory: status.statusCategory.name } : {}),
       ...(priority?.name ? { priority: priority.name } : {}),
       storyPoints: storyPointsFromFields(issueFields, config.jira.storyPointFields),
-      ...(assignee?.accountId && assignee.displayName
-        ? { assignee: { accountId: assignee.accountId, displayName: assignee.displayName } }
-        : {}),
+      ...(assignee ? { assignee } : {}),
+      ...(qaAssignee ? { qaAssignee } : {}),
       ...(team ? { team } : {}),
       sprintId,
       jiraUpdatedAt: typeof issueFields.updated === 'string' ? issueFields.updated : '',

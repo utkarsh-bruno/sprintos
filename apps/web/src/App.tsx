@@ -3,14 +3,16 @@ import Current from './pages/Current.js';
 import Tickets from './pages/Tickets.js';
 import Capacity from './pages/Capacity.js';
 import Changes from './pages/Changes.js';
+import Calls from './pages/Calls.js';
 import Settings from './pages/Settings.js';
 
-const tabs = ['Current', 'Tickets', 'Capacity', 'Changes', 'Settings'] as const;
+const tabs = ['Current', 'Tickets', 'Calls', 'Capacity', 'Changes', 'Settings'] as const;
 type Tab = (typeof tabs)[number];
 
 const pages: Record<Tab, () => JSX.Element> = {
   Current,
   Tickets,
+  Calls,
   Capacity,
   Changes,
   Settings,

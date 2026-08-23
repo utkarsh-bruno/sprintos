@@ -1,15 +1,9 @@
 import type { AppConfig, Ticket, TicketFlag } from '@sprintos/types';
+import { hasConfirmedOpenPr, hasOpenPr } from './pr-state.js';
 
 function isDoneStatus(status: string): boolean {
   const lower = status.toLowerCase();
   return lower.includes('done') || lower.includes('closed');
-}
-
-function hasOpenPr(ticket: Ticket): boolean {
-  if (!ticket.pr?.url) return false;
-  if (ticket.pr.merged) return false;
-  if (ticket.pr.state === 'closed') return false;
-  return true;
 }
 
 export function buildTicketFlags(
@@ -47,6 +41,17 @@ export function buildTicketFlags(
       label: 'PR, Please Leave the House',
       reason: `${ticket.key} is in "${ticket.status}" on sprint day ${sprintDay} with no open PR (expected by day ${prThreshold}).`,
       severity: sprintDay > prThreshold ? 'urgent' : 'warning',
+    });
+  }
+
+  if (
+    hasConfirmedOpenPr(ticket) &&
+    (ticket.operationalOwner === 'qa' || ticket.operationalOwner === 'done')
+  ) {
+    flags.push({
+      label: 'PR, Still in the Building',
+      reason: `${ticket.key} is in "${ticket.status}" but still has an open PR — merge it or clear the PR field in Jira.`,
+      severity: 'warning',
     });
   }
 

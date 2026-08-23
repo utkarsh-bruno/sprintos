@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AppConfig, Ticket } from '@sprintos/types';
-import { buildForecast } from './forecast.js';
+import { buildForecast, buildPersonForecast } from './forecast.js';
 
 const config: AppConfig = {
   jira: {
@@ -25,10 +25,10 @@ const config: AppConfig = {
     freezeDay: 8,
     hoursPerPoint: 5,
     capacity: {
-      developerHoursPerDay: 5,
-      leadReviewHoursPerDay: 3,
-      additionalReviewHoursPerDay: 2,
-      qaHoursPerDay: 5,
+      developerHoursPerDay: 8,
+      leadReviewHoursPerDay: 8,
+      additionalReviewHoursPerDay: 8,
+      qaHoursPerDay: 8,
     },
     thresholds: {
       developerPrExpectedByDay: 6,
@@ -72,7 +72,7 @@ describe('buildForecast', () => {
     const rows = buildForecast([ticket()], config, 5, 3);
     const devRow = rows.find((r) => r.party === 'Developer');
     expect(devRow?.loadHours).toBe(30);
-    expect(devRow?.capacityHours).toBe(15);
+    expect(devRow?.capacityHours).toBe(24);
   });
 
   it('includes lead review hours for open PRs needing lead review', () => {
@@ -112,7 +112,7 @@ describe('buildForecast', () => {
     expect(qaRow?.loadHours).toBe(4);
   });
 
-  it('marks bottleneck when load exceeds capacity', () => {
+  it('marks overload when load exceeds capacity', () => {
     const rows = buildForecast(
       [
         ticket({ storyPoints: 20 }),
@@ -123,7 +123,144 @@ describe('buildForecast', () => {
       1,
     );
     const devRow = rows.find((r) => r.party === 'Developer');
-    expect(devRow?.status).toBe('bottleneck');
+    expect(devRow?.status).toBe('overload');
     expect(devRow?.utilizationPct).toBeGreaterThanOrEqual(100);
+  });
+});
+
+describe('buildPersonForecast', () => {
+  const teamConfig: AppConfig = {
+    ...config,
+    teamMembers: [
+      {
+        jiraAccountId: 'dev-1',
+        displayName: 'Alice',
+        roles: ['developer'],
+        hoursPerDay: 8,
+      },
+      {
+        jiraAccountId: 'dev-2',
+        displayName: 'Bob',
+        roles: ['developer'],
+      },
+    ],
+  };
+
+  it('attributes dev load by assignee', () => {
+    const rows = buildPersonForecast(
+      [
+        ticket({
+          key: 'BRU-1',
+          storyPoints: 8,
+          assignee: { accountId: 'dev-1', displayName: 'Alice' },
+        }),
+        ticket({
+          key: 'BRU-2',
+          storyPoints: 4,
+          assignee: { accountId: 'dev-2', displayName: 'Bob' },
+        }),
+      ],
+      teamConfig,
+      3,
+    );
+    const alice = rows.find((r) => r.party.startsWith('Alice'));
+    const bob = rows.find((r) => r.party.startsWith('Bob'));
+    expect(alice?.loadHours).toBe(30);
+    expect(bob?.loadHours).toBe(15);
+  });
+
+  it('returns empty when roster is empty', () => {
+    expect(buildPersonForecast([ticket()], config, 3)).toEqual([]);
+  });
+
+  it('counts To Do tickets toward developer even when operational owner is product', () => {
+    const rows = buildPersonForecast(
+      [
+        ticket({
+          key: 'BRU-3077',
+          status: 'To Do',
+          operationalOwner: 'product',
+          storyPoints: 2,
+          assignee: { accountId: 'dev-1', displayName: 'Alice' },
+        }),
+      ],
+      teamConfig,
+      3,
+    );
+    expect(rows.find((r) => r.party.startsWith('Alice'))?.loadHours).toBe(10);
+  });
+
+  it('attributes lead review queue to roster members with lead role', () => {
+    const leadConfig: AppConfig = {
+      ...config,
+      teamMembers: [
+        {
+          jiraAccountId: 'lead-1',
+          displayName: 'Utkarsh',
+          roles: ['developer', 'lead'],
+        },
+        {
+          jiraAccountId: 'dev-2',
+          displayName: 'Gopu',
+          roles: ['developer'],
+        },
+      ],
+    };
+    const rows = buildPersonForecast(
+      [
+        ticket({
+          key: 'BRU-4221',
+          status: 'In Review',
+          operationalOwner: 'lead',
+          assignee: { accountId: 'dev-2', displayName: 'Gopu' },
+          pr: {
+            url: 'https://github.com/usebruno/bruno/pull/1',
+            repoType: 'oss',
+            state: 'open',
+            changedFiles: 10,
+            changedLines: 500,
+          },
+        }),
+      ],
+      leadConfig,
+      3,
+    );
+    const utkarsh = rows.find((r) => r.party.startsWith('Utkarsh'));
+    const gopu = rows.find((r) => r.party.startsWith('Gopu'));
+    expect(utkarsh?.loadHours).toBeGreaterThan(0);
+    expect(gopu?.loadHours).toBe(0);
+  });
+
+  it('skips lead review load for lead-authored PRs on the lead person row', () => {
+    const leadConfig: AppConfig = {
+      ...config,
+      teamMembers: [
+        {
+          jiraAccountId: 'lead-1',
+          displayName: 'Utkarsh',
+          roles: ['developer', 'lead'],
+        },
+      ],
+    };
+    const rows = buildPersonForecast(
+      [
+        ticket({
+          key: 'BRU-4185',
+          status: 'In Review',
+          operationalOwner: 'lead',
+          assignee: { accountId: 'lead-1', displayName: 'Utkarsh' },
+          pr: {
+            url: 'https://github.com/usebruno/bruno/pull/8963',
+            repoType: 'oss',
+            state: 'open',
+            changedFiles: 10,
+            changedLines: 500,
+          },
+        }),
+      ],
+      leadConfig,
+      3,
+    );
+    expect(rows.find((r) => r.party.startsWith('Utkarsh'))?.loadHours).toBe(0);
   });
 });

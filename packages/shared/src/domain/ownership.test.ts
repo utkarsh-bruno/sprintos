@@ -15,6 +15,11 @@ describe('resolveOperationalOwner', () => {
     expect(result.reason).toMatch(/In Progress/);
   });
 
+  it('maps IN REVIEW case-insensitively', () => {
+    const result = resolveOperationalOwner('IN REVIEW', statusOwnerMap);
+    expect(result.owner).toBe('lead');
+  });
+
   it('returns unknown for unmapped status', () => {
     const result = resolveOperationalOwner('Weird Status', statusOwnerMap);
     expect(result.owner).toBe('unknown');

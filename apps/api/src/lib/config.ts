@@ -15,6 +15,9 @@ const DEFAULTS: AppConfig = {
     prField: 'customfield_10454',
     sprintField: 'customfield_10020',
     storyPointFields: ['customfield_10016', 'customfield_11204'],
+    projectKey: 'BRU',
+    teamName: 'Commit Club',
+    qaField: 'customfield_10727',
   },
   github: {
     token: '',
@@ -38,22 +41,29 @@ const DEFAULTS: AppConfig = {
   },
   statusOwnerMap: {
     Planning: 'product',
+    PLANNING: 'product',
+    'Product Planning': 'product',
     'To Do': 'product',
     'In Progress': 'developer',
     'In Review': 'lead',
+    'IN REVIEW': 'lead',
+    'Peer review': 'lead',
     QA: 'qa',
     Testing: 'qa',
+    UAT: 'qa',
+    Staged: 'qa',
     Done: 'done',
+    Merged: 'done',
   },
   sprint: {
     workingDays: 10,
     freezeDay: 8,
     hoursPerPoint: 5,
     capacity: {
-      developerHoursPerDay: 5,
-      leadReviewHoursPerDay: 3,
-      additionalReviewHoursPerDay: 2,
-      qaHoursPerDay: 5,
+      developerHoursPerDay: 8,
+      leadReviewHoursPerDay: 8,
+      additionalReviewHoursPerDay: 8,
+      qaHoursPerDay: 8,
     },
     thresholds: {
       developerPrExpectedByDay: 6,
@@ -72,6 +82,7 @@ const DEFAULTS: AppConfig = {
       maxLineReviewFactor: 2,
     },
   },
+  teamMembers: [],
 };
 
 function deepMerge<T>(target: T, source: Partial<T>): T {
@@ -148,6 +159,10 @@ export async function mergeAppConfig(partial: Partial<AppConfig>): Promise<AppCo
   }
   if (partial.github && isMaskedOrEmptyToken(partial.github.token)) {
     merged.github.token = existing.github.token;
+  }
+
+  if (partial.jira && 'activeSprintId' in partial.jira && partial.jira.activeSprintId == null) {
+    delete merged.jira.activeSprintId;
   }
 
   return merged;

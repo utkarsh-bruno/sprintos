@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AppConfig, PlanningOverride, Ticket } from '@sprintos/types';
-import { applyPlanningOverride, isExcludedFromCapacity, whatIfImpact } from './planning.js';
+import { applyPlanningOverride, isExcludedFromCapacity, planningVerdict, whatIfImpact } from './planning.js';
 import { buildForecast } from './forecast.js';
 
 const config: AppConfig = {
@@ -26,10 +26,10 @@ const config: AppConfig = {
     freezeDay: 8,
     hoursPerPoint: 5,
     capacity: {
-      developerHoursPerDay: 5,
-      leadReviewHoursPerDay: 3,
-      additionalReviewHoursPerDay: 2,
-      qaHoursPerDay: 5,
+      developerHoursPerDay: 8,
+      leadReviewHoursPerDay: 8,
+      additionalReviewHoursPerDay: 8,
+      qaHoursPerDay: 8,
     },
     thresholds: {
       developerPrExpectedByDay: 6,
@@ -124,5 +124,35 @@ describe('whatIfImpact', () => {
     const impact = whatIfImpact(newOne, existing, config, 5, 1);
     expect(impact.recommendation?.label).toBe("I'm Not Touching That");
     expect(impact.recommendation?.ticketKey).toBe('BRU-2');
+  });
+});
+
+describe('planningVerdict', () => {
+  it('allows pick when developer has buffer', () => {
+    const existing = [ticket({ key: 'BRU-1', storyPoints: 2 })];
+    const planning = ticket({
+      key: 'BRU-9',
+      status: 'PLANNING',
+      operationalOwner: 'product',
+      storyPoints: 2,
+    });
+
+    const verdict = planningVerdict(planning, [...existing, planning], config, 5, 3);
+    expect(verdict.label).toBe('Developer can pick up');
+    expect(verdict.reason).toMatch(/buffer/i);
+  });
+
+  it('rejects pick when sprint is full', () => {
+    const existing = [ticket({ key: 'BRU-1', storyPoints: 20 })];
+    const planning = ticket({
+      key: 'BRU-9',
+      status: 'PLANNING',
+      operationalOwner: 'product',
+      storyPoints: 20,
+    });
+
+    const verdict = planningVerdict(planning, [...existing, planning], config, 5, 1);
+    expect(verdict.label).toBe("Can't pick up");
+    expect(verdict.reason).toMatch(/beyond day-8|buffer/i);
   });
 });

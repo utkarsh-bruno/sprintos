@@ -1,9 +1,13 @@
 import type { FastifyInstance } from 'fastify';
-import { getLatestBrief, getSyncStatus, runSync } from '../services/sync.js';
+import { getLatestBrief, getSyncStatus, resetSyncData, runSync } from '../services/sync.js';
 
 export async function syncRoutes(app: FastifyInstance) {
   app.post('/api/sync', async () => {
     return runSync();
+  });
+
+  app.post('/api/sync/reset', async () => {
+    return resetSyncData();
   });
 
   app.get('/api/status', async () => {

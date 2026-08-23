@@ -29,10 +29,10 @@ const config: AppConfig = {
     freezeDay: 8,
     hoursPerPoint: 5,
     capacity: {
-      developerHoursPerDay: 5,
-      leadReviewHoursPerDay: 3,
-      additionalReviewHoursPerDay: 2,
-      qaHoursPerDay: 5,
+      developerHoursPerDay: 8,
+      leadReviewHoursPerDay: 8,
+      additionalReviewHoursPerDay: 8,
+      qaHoursPerDay: 8,
     },
     thresholds: {
       developerPrExpectedByDay: 6,
@@ -86,6 +86,33 @@ const baseSync: SyncStatus = {
 };
 
 describe('buildBrief', () => {
+  it('lists planning tickets with capacity verdict', () => {
+    const brief = buildBrief({
+      tickets: [
+        ticket({
+          key: 'BRU-4359',
+          status: 'PLANNING',
+          operationalOwner: 'product',
+          summary: 'Mock server bug',
+          storyPoints: 2,
+        }),
+        ticket({
+          key: 'BRU-4030',
+          status: 'To Do',
+          operationalOwner: 'product',
+          summary: 'Already picked',
+        }),
+      ],
+      changeEvents: [],
+      config,
+      syncStatus: baseSync,
+      newTickets: [],
+    });
+    expect(brief.todaysCalls.some((c) => c.ticketKey === 'BRU-4359')).toBe(true);
+    expect(brief.todaysCalls.find((c) => c.ticketKey === 'BRU-4359')?.label).toMatch(/pick up/i);
+    expect(brief.todaysCalls.find((c) => c.ticketKey === 'BRU-4359')?.reason).toMatch(/Mock server bug/);
+  });
+
   it('includes lead-owned tickets in needsMe', () => {
     const brief = buildBrief({
       tickets: [ticket({ key: 'BRU-2', operationalOwner: 'lead', status: 'In Review', ownerReason: 'In review' })],
@@ -95,6 +122,57 @@ describe('buildBrief', () => {
       newTickets: [],
     });
     expect(brief.needsMe.some((item) => item.ticketKey === 'BRU-2')).toBe(true);
+  });
+
+  it('does not include QA tickets in needsMe when Jira still links an open PR', () => {
+    const brief = buildBrief({
+      tickets: [
+        ticket({
+          key: 'BRU-4153',
+          status: 'QA',
+          operationalOwner: 'qa',
+          ownerReason: 'Status "QA" maps to qa',
+          pr: {
+            url: 'https://github.com/usebruno/bruno/pull/8957',
+            state: 'open',
+            merged: false,
+            repoType: 'oss',
+          },
+        }),
+      ],
+      changeEvents: [],
+      config,
+      syncStatus: baseSync,
+      newTickets: [],
+    });
+    expect(brief.needsMe.some((item) => item.ticketKey === 'BRU-4153')).toBe(false);
+  });
+
+  it('includes developer tickets with open PRs in needsMe', () => {
+    const brief = buildBrief({
+      tickets: [
+        ticket({
+          key: 'BRU-9',
+          status: 'In Progress',
+          operationalOwner: 'developer',
+          ownerReason: 'Status "In Progress" maps to developer',
+          pr: {
+            url: 'https://github.com/usebruno/bruno/pull/1',
+            state: 'open',
+            merged: false,
+            repoType: 'oss',
+          },
+        }),
+      ],
+      changeEvents: [],
+      config,
+      syncStatus: baseSync,
+      newTickets: [],
+    });
+    expect(brief.needsMe.some((item) => item.ticketKey === 'BRU-9')).toBe(true);
+    expect(brief.needsMe.find((item) => item.ticketKey === 'BRU-9')?.reason).toBe(
+      'Open PR waiting for your review',
+    );
   });
 
   it('counts attention by party using display labels', () => {

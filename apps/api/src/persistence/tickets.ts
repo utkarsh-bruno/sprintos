@@ -137,6 +137,51 @@ export function upsertTickets(tickets: Ticket[]): void {
   tx(tickets);
 }
 
+/** Replace the sprint's ticket rows with the filtered sync result (drops tickets no longer matched). */
+export function replaceTicketsForSprint(sprintId: string, tickets: Ticket[]): void {
+  const db = getDb();
+  const upsert = db.prepare(`
+    INSERT INTO tickets (key, sprint_id, data_json, content_hash, updated_at)
+    VALUES (@key, @sprintId, @dataJson, @contentHash, @updatedAt)
+    ON CONFLICT(key) DO UPDATE SET
+      sprint_id = excluded.sprint_id,
+      data_json = excluded.data_json,
+      content_hash = excluded.content_hash,
+      updated_at = excluded.updated_at
+  `);
+
+  const tx = db.transaction((items: Ticket[]) => {
+    const keys = items.map((t) => t.key);
+    if (keys.length === 0) {
+      db.prepare('DELETE FROM tickets WHERE sprint_id = ?').run(sprintId);
+    } else {
+      const placeholders = keys.map(() => '?').join(',');
+      db.prepare(`DELETE FROM tickets WHERE sprint_id = ? AND key NOT IN (${placeholders})`).run(
+        sprintId,
+        ...keys,
+      );
+    }
+    for (const ticket of items) {
+      upsert.run({
+        key: ticket.key,
+        sprintId: ticket.sprintId,
+        dataJson: JSON.stringify(ticket),
+        contentHash: ticketContentHash({
+          key: ticket.key,
+          status: ticket.status,
+          storyPoints: ticket.storyPoints,
+          assignee: ticket.assignee,
+          operationalOwner: ticket.operationalOwner,
+          prUrl: ticket.pr?.url,
+        }),
+        updatedAt: ticket.lastSeenAt,
+      });
+    }
+  });
+
+  tx(tickets);
+}
+
 export function hasSnapshotsForSprint(sprintId: string): boolean {
   const row = getDb()
     .prepare('SELECT 1 FROM snapshots WHERE sprint_id = ? LIMIT 1')
@@ -166,6 +211,26 @@ export function loadLatestSnapshotTickets(sprintId: string): Ticket[] {
   const rows = getDb()
     .prepare('SELECT data_json FROM snapshot_tickets WHERE snapshot_id = ?')
     .all(snapshot.id) as Array<{ data_json: string }>;
+
+  return rows.map((row) => JSON.parse(row.data_json) as Ticket);
+}
+
+/** Snapshot before the most recent one (for scoped change detection). */
+export function loadPreviousSnapshotTickets(sprintId: string): Ticket[] {
+  const snapshots = getDb()
+    .prepare(`
+      SELECT id FROM snapshots
+      WHERE sprint_id = ?
+      ORDER BY id DESC
+      LIMIT 2
+    `)
+    .all(sprintId) as Array<{ id: number }>;
+
+  if (snapshots.length < 2) return [];
+
+  const rows = getDb()
+    .prepare('SELECT data_json FROM snapshot_tickets WHERE snapshot_id = ?')
+    .all(snapshots[1].id) as Array<{ data_json: string }>;
 
   return rows.map((row) => JSON.parse(row.data_json) as Ticket);
 }
@@ -330,6 +395,40 @@ export function loadPlanningOverrides(): Map<string, PlanningOverride> {
     });
   }
   return map;
+}
+
+export interface ClearSyncDataResult {
+  snapshotsRemoved: number;
+  ticketsRemoved: number;
+  changeEventsRemoved: number;
+  ownershipEventsRemoved: number;
+  syncRunsRemoved: number;
+}
+
+/** Wipe sync history so the next sync establishes a fresh baseline (planning overrides kept). */
+export function clearSyncData(): ClearSyncDataResult {
+  const db = getDb();
+
+  return db.transaction(() => {
+    db.prepare('DELETE FROM snapshot_tickets').run();
+    const snapshotsRemoved = (db.prepare('DELETE FROM snapshots').run() as { changes: number }).changes;
+    const ticketsRemoved = (db.prepare('DELETE FROM tickets').run() as { changes: number }).changes;
+    const changeEventsRemoved = (
+      db.prepare('DELETE FROM change_events').run() as { changes: number }
+    ).changes;
+    const ownershipEventsRemoved = (
+      db.prepare('DELETE FROM ownership_events').run() as { changes: number }
+    ).changes;
+    const syncRunsRemoved = (db.prepare('DELETE FROM sync_runs').run() as { changes: number }).changes;
+
+    return {
+      snapshotsRemoved,
+      ticketsRemoved,
+      changeEventsRemoved,
+      ownershipEventsRemoved,
+      syncRunsRemoved,
+    };
+  })();
 }
 
 export function startSyncRun(startedAt: string): number {

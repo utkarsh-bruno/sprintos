@@ -112,3 +112,16 @@ export function diffSnapshots(
 
   return { changeEvents, ownershipEvents, newTickets };
 }
+
+/** Keep change events only for tickets in the current or previous scoped set (team/project filter). */
+export function filterChangeEventsForScope(
+  events: ChangeEvent[],
+  currentTickets: Ticket[],
+  previousScopedTickets: Ticket[],
+): ChangeEvent[] {
+  const inScope = new Set([
+    ...currentTickets.map((t) => t.key),
+    ...previousScopedTickets.map((t) => t.key),
+  ]);
+  return events.filter((e) => inScope.has(e.ticketKey));
+}

@@ -25,10 +25,10 @@ const config: AppConfig = {
     freezeDay: 8,
     hoursPerPoint: 5,
     capacity: {
-      developerHoursPerDay: 5,
-      leadReviewHoursPerDay: 3,
-      additionalReviewHoursPerDay: 2,
-      qaHoursPerDay: 5,
+      developerHoursPerDay: 8,
+      leadReviewHoursPerDay: 8,
+      additionalReviewHoursPerDay: 8,
+      qaHoursPerDay: 8,
     },
     thresholds: {
       developerPrExpectedByDay: 6,
@@ -103,5 +103,78 @@ describe('buildTicketFlags', () => {
       3,
     );
     expect(flags.some((f) => f.severity === 'warning' && f.label === 'Who Owns This?')).toBe(true);
+  });
+
+  it('flags open PR on QA ticket', () => {
+    const flags = buildTicketFlags(
+      ticket({
+        key: 'BRU-4153',
+        status: 'QA',
+        operationalOwner: 'qa',
+        ownerReason: 'Status "QA" maps to qa',
+        pr: {
+          url: 'https://github.com/usebruno/bruno/pull/8957',
+          state: 'open',
+          merged: false,
+          repoType: 'oss',
+        },
+      }),
+      config,
+      7,
+    );
+    expect(flags.some((f) => f.label === 'PR, Still in the Building')).toBe(true);
+    expect(flags.find((f) => f.label === 'PR, Still in the Building')?.reason).toMatch(/open PR/i);
+  });
+
+  it('does not flag open PR on developer ticket', () => {
+    const flags = buildTicketFlags(
+      ticket({
+        status: 'In Progress',
+        operationalOwner: 'developer',
+        pr: {
+          url: 'https://github.com/usebruno/bruno/pull/1',
+          state: 'open',
+          merged: false,
+        },
+      }),
+      config,
+      7,
+    );
+    expect(flags.some((f) => f.label === 'PR, Still in the Building')).toBe(false);
+  });
+
+  it('does not flag Done ticket when GitHub metadata is incomplete', () => {
+    const flags = buildTicketFlags(
+      ticket({
+        key: 'BRU-4309',
+        status: 'Done',
+        operationalOwner: 'done',
+        pr: {
+          url: 'https://github.com/usebruno/bruno/pull/8978',
+          incomplete: true,
+        },
+      }),
+      config,
+      7,
+    );
+    expect(flags.some((f) => f.label === 'PR, Still in the Building')).toBe(false);
+  });
+
+  it('does not flag Done ticket when PR is merged', () => {
+    const flags = buildTicketFlags(
+      ticket({
+        key: 'BRU-4309',
+        status: 'Done',
+        operationalOwner: 'done',
+        pr: {
+          url: 'https://github.com/usebruno/bruno/pull/8978',
+          state: 'closed',
+          merged: true,
+        },
+      }),
+      config,
+      7,
+    );
+    expect(flags.some((f) => f.label === 'PR, Still in the Building')).toBe(false);
   });
 });

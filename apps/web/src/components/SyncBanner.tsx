@@ -26,5 +26,15 @@ export function SyncBanner({ sync }: { sync: SyncStatus }) {
     );
   }
 
+  if (sync.unmappedStatuses && sync.unmappedStatuses.length > 0) {
+    return (
+      <div className="rounded-xl border border-amber-500/40 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+        Unmapped Jira statuses: {sync.unmappedStatuses.join(', ')}. Add them to{' '}
+        <code className="text-amber-50">statusOwnerMap</code> in Settings (or config.json) then
+        re-sync.
+      </div>
+    );
+  }
+
   return null;
 }

@@ -6,7 +6,10 @@
     "teamField": "customfield_10392",
     "prField": "customfield_10454",
     "sprintField": "customfield_10020",
-    "storyPointFields": ["customfield_10016", "customfield_11204"]
+    "storyPointFields": ["customfield_10016", "customfield_11204"],
+    "projectKey": "BRU",
+    "teamName": "Commit Club",
+    "qaField": "customfield_10727"
   },
   "github": {
     "token": ""
@@ -30,22 +33,29 @@
   },
   "statusOwnerMap": {
     "Planning": "product",
+    "PLANNING": "product",
+    "Product Planning": "product",
     "To Do": "product",
     "In Progress": "developer",
     "In Review": "lead",
+    "IN REVIEW": "lead",
+    "Peer review": "lead",
     "QA": "qa",
     "Testing": "qa",
-    "Done": "done"
+    "UAT": "qa",
+    "Staged": "qa",
+    "Done": "done",
+    "Merged": "done"
   },
   "sprint": {
     "workingDays": 10,
     "freezeDay": 8,
     "hoursPerPoint": 5,
     "capacity": {
-      "developerHoursPerDay": 5,
-      "leadReviewHoursPerDay": 3,
-      "additionalReviewHoursPerDay": 2,
-      "qaHoursPerDay": 5
+      "developerHoursPerDay": 8,
+      "leadReviewHoursPerDay": 8,
+      "additionalReviewHoursPerDay": 8,
+      "qaHoursPerDay": 8
     },
     "thresholds": {
       "developerPrExpectedByDay": 6,
@@ -63,5 +73,6 @@
       "lineReviewFactor": 0.25,
       "maxLineReviewFactor": 2
     }
-  }
+  },
+  "teamMembers": []
 }

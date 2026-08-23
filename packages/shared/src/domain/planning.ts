@@ -106,6 +106,78 @@ function bufferWorkingDays(row: { loadHours: number; capacityHours: number }, da
   return (row.capacityHours - row.loadHours) / dailyCapacity;
 }
 
+/** Simulate a planning ticket as if it were picked into active dev work. */
+export function ticketIfPicked(ticket: Ticket): Ticket {
+  return {
+    ...ticket,
+    operationalOwner: 'developer',
+    status: 'To Do',
+    ownerReason: 'Simulated as picked for capacity check',
+  };
+}
+
+/** Capacity-based pick / no-pick verdict for a ticket still in planning. */
+export function planningVerdict(
+  ticket: Ticket,
+  tickets: Ticket[],
+  config: AppConfig,
+  sprintDay: number,
+  workingDaysUntilFreeze: number,
+  planningOverrides?: Map<string, PlanningOverride>,
+): BriefItem {
+  const asPicked = ticketIfPicked(ticket);
+  const impact = whatIfImpact(
+    asPicked,
+    tickets,
+    config,
+    sprintDay,
+    workingDaysUntilFreeze,
+    planningOverrides,
+  );
+
+  const devHours =
+    impact.extraLoadByParty.Developer ??
+    estimateImplementationHours(ticket.storyPoints, 'To Do', config.sprint.hoursPerPoint);
+
+  if (impact.recommendation) {
+    return {
+      ticketKey: ticket.key,
+      label: "Can't pick up",
+      reason: `${ticket.storyPoints}pt (~${devHours}h dev) — ${impact.recommendation.reason.replace(/^Adding this ticket leaves /, '')}`,
+    };
+  }
+
+  const others = tickets.filter((t) => t.key !== ticket.key);
+  const forecast = buildForecast(
+    [...others, asPicked],
+    config,
+    sprintDay,
+    workingDaysUntilFreeze,
+    planningOverrides,
+  );
+  const devRow = forecast.find((r) => r.party === 'Developer');
+  const dailyDev = config.sprint.capacity.developerHoursPerDay;
+  const bufferDays =
+    devRow && dailyDev > 0 ? (devRow.capacityHours - devRow.loadHours) / dailyDev : 0;
+  const bufferText =
+    bufferDays >= 0
+      ? `${bufferDays.toFixed(1)} working day${Math.abs(bufferDays - 1) < 0.05 ? '' : 's'} dev buffer`
+      : `${Math.abs(bufferDays).toFixed(1)} working day${Math.abs(bufferDays - 1) < 0.05 ? '' : 's'} over dev capacity`;
+
+  const constrained = forecast
+    .filter((r) => r.status === 'tight' || r.status === 'overload')
+    .map((r) => `${r.party} ${r.utilizationPct}%`)
+    .join(', ');
+
+  const suffix = constrained ? ` · watch ${constrained}` : '';
+
+  return {
+    ticketKey: ticket.key,
+    label: 'Developer can pick up',
+    reason: `${ticket.storyPoints}pt (~${devHours}h dev) · ${bufferText} before day-${config.sprint.freezeDay} freeze${suffix}`,
+  };
+}
+
 export function whatIfImpact(
   newTicket: Ticket,
   tickets: Ticket[],
@@ -147,8 +219,8 @@ export function whatIfImpact(
     const buffer = bufferWorkingDays(row, dailyCapacity);
     const baseBuffer = baseRow ? bufferWorkingDays(baseRow, dailyCapacity) : Infinity;
     const worsened =
-      row.status === 'bottleneck' ||
-      (row.status === 'tight' && baseRow?.status !== 'tight' && baseRow?.status !== 'bottleneck');
+      row.status === 'overload' ||
+      (row.status === 'tight' && baseRow?.status !== 'tight' && baseRow?.status !== 'overload');
 
     if (buffer < minBufferDays || worsened) {
       const bufferText =

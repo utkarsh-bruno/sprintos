@@ -1,7 +1,9 @@
 import type { BriefPayload, PullRequestData, Sprint, SyncStatus, Ticket } from '@sprintos/types';
 import {
   buildBrief,
+  collectUnmappedStatuses,
   diffSnapshots,
+  filterChangeEventsForScope,
   repoTypeFromSlug,
   resolveOperationalOwner,
   sprintDayIndex,
@@ -13,11 +15,14 @@ import {
   fetchActiveSprint,
   fetchSprintMeta,
   fetchSprintTickets,
+  ticketMatchesJiraFilters,
   type JiraTicketRaw,
 } from '../integrations/jira.js';
 import {
+  clearSyncData,
   completeSyncRun,
   createSnapshot,
+  type ClearSyncDataResult,
   getChangeEventsForSyncRun,
   getLatestSuccessfulSyncRun,
   getLatestSyncRun,
@@ -27,16 +32,23 @@ import {
   insertChangeEvents,
   insertOwnershipEvents,
   loadPlanningOverrides,
+  loadPreviousSnapshotTickets,
   loadTicketsForSprint,
   startSyncRun,
   upsertSprint,
-  upsertTickets,
+  replaceTicketsForSprint,
 } from '../persistence/tickets.js';
 
 let cachedBrief: BriefPayload | null = null;
 
 export function clearBriefCache(): void {
   cachedBrief = null;
+}
+
+export function resetSyncData(): ClearSyncDataResult {
+  const result = clearSyncData();
+  clearBriefCache();
+  return result;
 }
 
 function todayIsoDate(): string {
@@ -101,6 +113,7 @@ function buildTicket(
     ...(raw.priority ? { priority: raw.priority } : {}),
     storyPoints: raw.storyPoints,
     ...(raw.assignee ? { assignee: raw.assignee } : {}),
+    ...(raw.qaAssignee ? { qaAssignee: raw.qaAssignee } : {}),
     ...(raw.team ? { team: raw.team } : {}),
     sprintId: raw.sprintId,
     operationalOwner: owner,
@@ -160,6 +173,11 @@ function buildSyncStatusFromRun(
   return result;
 }
 
+function attachUnmappedStatuses(status: SyncStatus, tickets: Ticket[], config: Awaited<ReturnType<typeof readAppConfig>>): SyncStatus {
+  const unmapped = collectUnmappedStatuses(tickets.map((t) => t.status), config.statusOwnerMap);
+  return unmapped.length > 0 ? { ...status, unmappedStatuses: unmapped } : status;
+}
+
 export async function runSync(): Promise<BriefPayload> {
   const config = await readAppConfig();
   const startedAt = new Date().toISOString();
@@ -183,7 +201,9 @@ export async function runSync(): Promise<BriefPayload> {
     upsertSprint(sprint);
 
     const rawTickets = await fetchSprintTickets(config, activeSprint.id, sprintId);
-    const previousTickets = loadTicketsForSprint(sprintId);
+    const previousTickets = loadTicketsForSprint(sprintId).filter((t) =>
+      ticketMatchesJiraFilters(t, config.jira),
+    );
     const previousByKey = new Map(previousTickets.map((ticket) => [ticket.key, ticket]));
     const now = new Date().toISOString();
 
@@ -208,11 +228,14 @@ export async function runSync(): Promise<BriefPayload> {
     }
 
     const isFirstSync = !hasSnapshotsForSprint(sprintId);
-    const { changeEvents, ownershipEvents } = diffSnapshots(previousTickets, tickets, { isFirstSync });
+    const { changeEvents: rawChangeEvents, ownershipEvents } = diffSnapshots(previousTickets, tickets, {
+      isFirstSync,
+    });
+    const changeEvents = filterChangeEventsForScope(rawChangeEvents, tickets, previousTickets);
 
     insertChangeEvents(changeEvents);
     insertOwnershipEvents(ownershipEvents);
-    upsertTickets(tickets);
+    replaceTicketsForSprint(sprintId, tickets);
     createSnapshot(sprintId, tickets);
 
     const completedAt = new Date().toISOString();
@@ -228,7 +251,7 @@ export async function runSync(): Promise<BriefPayload> {
       allGithubFailed ? 'GitHub PR fetch failed for all linked pull requests' : undefined,
     );
 
-    const sync = buildSyncStatusFromRun(sprint, getLatestSyncRun(), isFirstSync);
+    const sync = attachUnmappedStatuses(buildSyncStatusFromRun(sprint, getLatestSyncRun(), isFirstSync), tickets, config);
     const newTicketKeys = new Set(
       changeEvents.filter((e) => e.type === 'ticket_added_to_sprint').map((e) => e.ticketKey),
     );
@@ -242,6 +265,7 @@ export async function runSync(): Promise<BriefPayload> {
       syncStatus: sync,
       newTickets,
       planningOverrides,
+      previousScopedTickets: previousTickets,
     });
 
     cachedBrief = brief;
@@ -282,10 +306,19 @@ export async function getLatestBrief(): Promise<BriefPayload | null> {
   }
 
   const config = await readAppConfig();
-  const tickets = loadTicketsForSprint(sprint.id);
-  const changed = getChangeEventsForSyncRun(syncRun);
+  const tickets = loadTicketsForSprint(sprint.id).filter((t) =>
+    ticketMatchesJiraFilters(t, config.jira),
+  );
+  const previousScoped = loadPreviousSnapshotTickets(sprint.id).filter((t) =>
+    ticketMatchesJiraFilters(t, config.jira),
+  );
+  const changed = filterChangeEventsForScope(
+    getChangeEventsForSyncRun(syncRun),
+    tickets,
+    previousScoped,
+  );
   const isFirstSync = getSnapshotCount(sprint.id) === 1;
-  const sync = buildSyncStatusFromRun(sprint, syncRun, isFirstSync);
+  const sync = attachUnmappedStatuses(buildSyncStatusFromRun(sprint, syncRun, isFirstSync), tickets, config);
 
   const newTicketKeys = new Set(
     changed.filter((e) => e.type === 'ticket_added_to_sprint').map((e) => e.ticketKey),
@@ -300,6 +333,7 @@ export async function getLatestBrief(): Promise<BriefPayload | null> {
     syncStatus: sync,
     newTickets,
     planningOverrides,
+    previousScopedTickets: previousScoped,
   });
 
   cachedBrief = brief;

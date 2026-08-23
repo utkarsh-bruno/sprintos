@@ -3,6 +3,7 @@ import type { AppConfig, OwnerParty, Ticket, TicketFlag } from '@sprintos/types'
 import type { PlanningMode } from '@sprintos/types';
 import { buildTicketFlags, whatIfImpact } from '@sprintos/shared';
 import { readAppConfig } from '../lib/config.js';
+import { ticketMatchesJiraFilters } from '../integrations/jira.js';
 import {
   getChangeEventsForSyncRun,
   getLatestSprint,
@@ -152,9 +153,9 @@ async function loadEnrichedTickets(): Promise<{
   const config = await readAppConfig();
   const syncStatus = getSyncStatus();
   const sprintDay = syncStatus.sprintDay ?? 1;
-  const tickets = loadTicketsForSprint(sprint.id).map((ticket) =>
-    enrichTicket(ticket, config, sprintDay),
-  );
+  const tickets = loadTicketsForSprint(sprint.id)
+    .filter((ticket) => ticketMatchesJiraFilters(ticket, config.jira))
+    .map((ticket) => enrichTicket(ticket, config, sprintDay));
 
   return {
     tickets,

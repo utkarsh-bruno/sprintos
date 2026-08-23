@@ -2,6 +2,7 @@ node_modules
 dist
 .env
 *.tsbuildinfo
+.DS_Store
 data/config.json
 data/sprintos.db
 data/sprintos.db-*

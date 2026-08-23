@@ -62,6 +62,10 @@ function flagSeverityClass(severity: TicketFlag['severity']): string {
   }
 }
 
+function personLabel(person?: { displayName: string }): string {
+  return person?.displayName ?? '—';
+}
+
 function dependencyLabel(ticket: Ticket): string {
   if (!ticket.dependency) return '—';
   if (ticket.dependency.blocked) {
@@ -185,7 +189,7 @@ export default function Tickets() {
 
         {data && data.tickets.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1080px] text-left text-sm">
+            <table className="w-full min-w-[1200px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-800 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-5 py-3 font-medium">Key</th>
@@ -193,6 +197,8 @@ export default function Tickets() {
                   <th className="px-5 py-3 font-medium">Priority</th>
                   <th className="px-5 py-3 font-medium">Points</th>
                   <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Assignee</th>
+                  <th className="px-5 py-3 font-medium">QA</th>
                   <th className="px-5 py-3 font-medium">Operational owner</th>
                   <th className="px-5 py-3 font-medium">Planning</th>
                   <th className="px-5 py-3 font-medium">Dependency</th>
@@ -224,6 +230,8 @@ export default function Tickets() {
                       <td className="whitespace-nowrap px-5 py-3">
                         <span className="pill status-pill">{ticket.status}</span>
                       </td>
+                      <td className="whitespace-nowrap px-5 py-3">{personLabel(ticket.assignee)}</td>
+                      <td className="whitespace-nowrap px-5 py-3">{personLabel(ticket.qaAssignee)}</td>
                       <td className="whitespace-nowrap px-5 py-3">
                         {OWNER_LABELS[ticket.operationalOwner] ?? ticket.operationalOwner}
                       </td>

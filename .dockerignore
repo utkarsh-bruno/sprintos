@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.env
+data/config.json
+data/sprintos.db
+data/sprintos.db-*
+.superpowers
+docs
+SprintOS-Cursor-Spec
+*.md
+!README.md

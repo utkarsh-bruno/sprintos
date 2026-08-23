@@ -1,5 +1,24 @@
 import type { DependencyState, OwnerParty } from '@sprintos/types';
 
+export function lookupStatusOwner(
+  status: string,
+  statusOwnerMap: Record<string, OwnerParty>,
+): OwnerParty | undefined {
+  if (statusOwnerMap[status]) return statusOwnerMap[status];
+  const lower = status.toLowerCase();
+  for (const [key, value] of Object.entries(statusOwnerMap)) {
+    if (key.toLowerCase() === lower) return value;
+  }
+  return undefined;
+}
+
+export function collectUnmappedStatuses(
+  statuses: string[],
+  statusOwnerMap: Record<string, OwnerParty>,
+): string[] {
+  return [...new Set(statuses.filter((s) => !lookupStatusOwner(s, statusOwnerMap)))].sort();
+}
+
 export function resolveOperationalOwner(
   status: string,
   statusOwnerMap: Record<string, OwnerParty>,
@@ -14,7 +33,7 @@ export function resolveOperationalOwner(
       reason: `Blocked on ${dependency.type}${dependency.note ? `: ${dependency.note}` : ''} (SprintOS dependency override)`
     };
   }
-  const mapped = statusOwnerMap[status];
+  const mapped = lookupStatusOwner(status, statusOwnerMap);
   if (mapped) return { owner: mapped, reason: `Status "${status}" maps to ${mapped}` };
   return { owner: 'unknown', reason: `Unmapped Jira status "${status}" — configure statusOwnerMap` };
 }

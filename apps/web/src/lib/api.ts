@@ -57,6 +57,14 @@ export const api = {
   getBrief: () => request<BriefPayload>('/brief'),
   getStatus: () => request<SyncStatus>('/status'),
   sync: () => request<BriefPayload>('/sync', { method: 'POST', body: '{}' }),
+  resetSyncData: () =>
+    request<{
+      snapshotsRemoved: number;
+      ticketsRemoved: number;
+      changeEventsRemoved: number;
+      ownershipEventsRemoved: number;
+      syncRunsRemoved: number;
+    }>('/sync/reset', { method: 'POST', body: '{}' }),
   getChanges: () => request<ChangesResponse>('/changes'),
   getConfig: () => request<AppConfig>('/config'),
   putConfig: (body: Partial<AppConfig>) => request<{ ok: boolean }>('/config', { method: 'PUT', body: JSON.stringify(body) }),

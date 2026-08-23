@@ -17,7 +17,7 @@ function formatChange(event: ChangeEvent): string {
 
 function forecastBarColor(status: ForecastRow['status']): string {
   switch (status) {
-    case 'bottleneck':
+    case 'overload':
       return 'bg-rose-500';
     case 'tight':
       return 'bg-amber-400';
@@ -223,24 +223,6 @@ export default function Current() {
                     style={{ width: `${Math.min(row.utilizationPct, 100)}%` }}
                   />
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-heading">Today&apos;s calls</div>
-        <div className="divide-y divide-slate-800">
-          {brief.todaysCalls.length === 0 ? (
-            <p className="px-5 py-4 text-sm text-slate-400">No urgent calls today.</p>
-          ) : (
-            brief.todaysCalls.map((call, i) => (
-              <div key={`${call.ticketKey}-${i}`} className="px-5 py-3">
-                <p className="text-sm font-medium text-slate-100">
-                  {call.ticketKey ? `${call.ticketKey}: ${call.label}` : call.label}
-                </p>
-                <p className="mt-0.5 text-sm text-slate-400">{call.reason}</p>
               </div>
             ))
           )}

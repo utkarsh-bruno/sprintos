@@ -12,10 +12,13 @@ export {
 export {
   resolveOperationalOwner,
   ownerDisplayLabel,
+  lookupStatusOwner,
+  collectUnmappedStatuses,
 } from './domain/ownership.js';
 export {
   ticketContentHash,
   diffSnapshots,
+  filterChangeEventsForScope,
   type DiffOptions,
 } from './domain/history.js';
 export {
@@ -24,11 +27,19 @@ export {
   estimateImplementationHours,
 } from './domain/estimates.js';
 export { buildTicketFlags } from './domain/risk.js';
-export { buildForecast } from './domain/forecast.js';
+export {
+  hasConfirmedOpenPr,
+  hasOpenPr,
+  hasPrReference,
+  isPrMergedOrClosed,
+} from './domain/pr-state.js';
+export { buildForecast, buildPersonForecast } from './domain/forecast.js';
 export { buildBrief, type BuildBriefInput } from './domain/brief.js';
 export {
   applyPlanningOverride,
   isExcludedFromCapacity,
+  planningVerdict,
+  ticketIfPicked,
   whatIfImpact,
   type AppliedPlanning,
   type WhatIfImpact,

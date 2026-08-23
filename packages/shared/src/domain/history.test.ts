@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { OwnerParty, Ticket } from '@sprintos/types';
-import { diffSnapshots, ticketContentHash } from './history.js';
+import { diffSnapshots, filterChangeEventsForScope, ticketContentHash } from './history.js';
 
 function ticket(overrides: Partial<Ticket> & { key: string }): Ticket {
   return {
@@ -74,5 +74,19 @@ describe('diffSnapshots', () => {
     expect(ownershipEvents[0].fromOwner).toBe('product');
     expect(ownershipEvents[0].toOwner).toBe('developer');
     expect(ownershipEvents[0].reason).toBe('status In Progress');
+  });
+});
+
+describe('filterChangeEventsForScope', () => {
+  it('drops removal events for tickets outside team scope', () => {
+    const previousScoped = [ticket({ key: 'BRU-4030' })];
+    const current = [ticket({ key: 'BRU-4030' })];
+    const events = [
+      { ticketKey: 'BRU-3731', type: 'ticket_removed_from_sprint' as const, detectedAt: '2026-01-01' },
+      { ticketKey: 'BRU-4030', type: 'status_changed' as const, detectedAt: '2026-01-01', beforeValue: 'To Do', afterValue: 'In Progress' },
+    ];
+    const filtered = filterChangeEventsForScope(events, current, previousScoped);
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].ticketKey).toBe('BRU-4030');
   });
 });
