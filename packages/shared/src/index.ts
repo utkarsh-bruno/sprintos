@@ -9,3 +9,7 @@ export {
   parseGithubSlug,
   type ReviewPath,
 } from './domain/review-path.js';
+export {
+  resolveOperationalOwner,
+  ownerDisplayLabel,
+} from './domain/ownership.js';
