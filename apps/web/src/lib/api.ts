@@ -1,4 +1,26 @@
-import type { BriefPayload } from '@sprintos/types';
+import type { BriefPayload, Ticket, TicketFlag } from '@sprintos/types';
+
+export type TicketFilter =
+  | 'all'
+  | 'needs-attention'
+  | 'my-queue'
+  | 'product'
+  | 'dev'
+  | 'lead'
+  | 'qa'
+  | 'blocked'
+  | 'new';
+
+export interface TicketsListResponse {
+  filter: TicketFilter;
+  jiraUrl: string;
+  tickets: Ticket[];
+}
+
+export interface TicketDetailResponse {
+  jiraUrl: string;
+  ticket: Ticket;
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -23,4 +45,7 @@ export const api = {
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
   getBrief: () => request<BriefPayload>('/brief'),
   sync: () => request<BriefPayload>('/sync', { method: 'POST', body: '{}' }),
+  getTickets: (filter: TicketFilter = 'all') =>
+    request<TicketsListResponse>(`/tickets?filter=${encodeURIComponent(filter)}`),
+  getTicket: (key: string) => request<TicketDetailResponse>(`/tickets/${encodeURIComponent(key)}`),
 };

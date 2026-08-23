@@ -6,6 +6,7 @@ import staticPlugin from '@fastify/static';
 import { configRoutes } from './routes/config.js';
 import { jiraRoutes } from './routes/jira.js';
 import { syncRoutes } from './routes/sync.js';
+import { ticketsRoutes } from './routes/tickets.js';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = Fastify({ logger: true });
@@ -14,6 +15,7 @@ await app.register(cors, { origin: true });
 await app.register(configRoutes);
 await app.register(jiraRoutes);
 await app.register(syncRoutes);
+await app.register(ticketsRoutes);
 
 app.get('/api/health', async () => ({ ok: true }));
 
