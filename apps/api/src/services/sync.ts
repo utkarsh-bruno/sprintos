@@ -1,5 +1,6 @@
 import type { BriefPayload, PullRequestData, Sprint, SyncStatus, Ticket } from '@sprintos/types';
 import {
+  buildBrief,
   diffSnapshots,
   repoTypeFromSlug,
   resolveOperationalOwner,
@@ -223,20 +224,18 @@ export async function runSync(): Promise<BriefPayload> {
     );
 
     const sync = buildSyncStatusFromRun(sprint, getLatestSyncRun(), isFirstSync);
-    const brief: BriefPayload = {
-      sync,
-      changed: changeEvents,
-      needsMe: [],
-      attentionByParty: {},
-      forecast: [],
-      todaysCalls: [],
-      ...(isFirstSync
-        ? {
-            overallLabel: 'First sync — we\'re starting the clock.',
-            overallReason: 'Baseline established for this sprint; changes will be tracked from the next sync.',
-          }
-        : {}),
-    };
+    const newTicketKeys = new Set(
+      changeEvents.filter((e) => e.type === 'ticket_added_to_sprint').map((e) => e.ticketKey),
+    );
+    const newTickets = tickets.filter((t) => newTicketKeys.has(t.key));
+
+    const brief = buildBrief({
+      tickets,
+      changeEvents,
+      config,
+      syncStatus: sync,
+      newTickets,
+    });
 
     cachedBrief = brief;
     return brief;
@@ -253,7 +252,7 @@ export function getSyncStatus(): SyncStatus {
   return buildSyncStatusFromRun(sprint, latest);
 }
 
-export function getLatestBrief(): BriefPayload | null {
+export async function getLatestBrief(): Promise<BriefPayload | null> {
   if (cachedBrief) {
     return cachedBrief;
   }
@@ -264,23 +263,28 @@ export function getLatestBrief(): BriefPayload | null {
   }
 
   const sprint = getLatestSprint();
-  const changed = getChangeEventsForSyncRun(syncRun);
-  const isFirstSync = sprint ? getSnapshotCount(sprint.id) === 1 : false;
+  if (!sprint) {
+    return null;
+  }
 
-  const brief: BriefPayload = {
-    sync: buildSyncStatusFromRun(sprint, syncRun, isFirstSync),
-    changed,
-    needsMe: [],
-    attentionByParty: {},
-    forecast: [],
-    todaysCalls: [],
-    ...(isFirstSync
-      ? {
-          overallLabel: 'First sync — we\'re starting the clock.',
-          overallReason: 'Baseline established for this sprint; changes will be tracked from the next sync.',
-        }
-      : {}),
-  };
+  const config = await readAppConfig();
+  const tickets = loadTicketsForSprint(sprint.id);
+  const changed = getChangeEventsForSyncRun(syncRun);
+  const isFirstSync = getSnapshotCount(sprint.id) === 1;
+  const sync = buildSyncStatusFromRun(sprint, syncRun, isFirstSync);
+
+  const newTicketKeys = new Set(
+    changed.filter((e) => e.type === 'ticket_added_to_sprint').map((e) => e.ticketKey),
+  );
+  const newTickets = tickets.filter((t) => newTicketKeys.has(t.key));
+
+  const brief = buildBrief({
+    tickets,
+    changeEvents: changed,
+    config,
+    syncStatus: sync,
+    newTickets,
+  });
 
   cachedBrief = brief;
   return brief;

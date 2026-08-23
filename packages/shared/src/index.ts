@@ -23,3 +23,6 @@ export {
   estimateMergeHours,
   estimateImplementationHours,
 } from './domain/estimates.js';
+export { buildTicketFlags } from './domain/risk.js';
+export { buildForecast } from './domain/forecast.js';
+export { buildBrief, type BuildBriefInput } from './domain/brief.js';

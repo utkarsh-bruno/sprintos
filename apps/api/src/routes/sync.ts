@@ -11,7 +11,7 @@ export async function syncRoutes(app: FastifyInstance) {
   });
 
   app.get('/api/brief', async (_req, reply) => {
-    const brief = getLatestBrief();
+    const brief = await getLatestBrief();
     if (!brief) {
       return reply.code(404).send({ error: 'No brief available — run POST /api/sync first' });
     }
