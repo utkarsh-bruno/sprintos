@@ -1,4 +1,5 @@
 export type RepositoryType = 'OSS' | 'Enterprise' | 'Shared';
+export type SprintState = 'active' | 'future' | 'closed';
 
 export const REVIEW_STAGES: Record<RepositoryType, string[]> = {
   OSS: ['Peer', 'Lead'],
@@ -20,6 +21,7 @@ export interface Team {
 
 export interface JiraConfig {
   url: string;
+  email: string;
   token: string;
   teamField: string;
 }
@@ -39,18 +41,29 @@ export interface Ticket {
   jiraId: string;
   summary?: string;
   status?: string;
+  team?: string;
+  assignee?: string;
   storyPoints?: number;
   repository?: RepositoryType;
   committed: boolean;
   author?: string;
   reviewers?: string[];
+  reviewStage?: string;
   notes?: string;
+  /** Status at plan finalize; used to detect movement during the sprint. */
+  baselineStatus?: string;
 }
 
 export interface SprintData {
   sprintId: string;
   jiraSprintId: number;
+  sprintName?: string;
+  sprintState?: SprintState;
   tickets: Ticket[];
   capacityOverrides: CapacityOverride[];
   planningNotes?: string;
+  finalizedAt?: string;
+  startedAt?: string;
 }
+
+export const SPRINT_LENGTH_DAYS = 10;

@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Config, SprintData } from '@sprintos/types';
@@ -22,7 +22,7 @@ async function writeJson(file: string, data: unknown): Promise<void> {
 }
 
 export function readConfig(): Promise<Config> {
-  return readJson<Config>('config.json', { jira: { url: '', token: '', teamField: '' }, teams: [] });
+  return readJson<Config>('config.json', { jira: { url: '', email: '', token: '', teamField: '' }, teams: [] });
 }
 
 export function writeConfig(config: Config): Promise<void> {
@@ -35,4 +35,17 @@ export function readSprint(sprintId: string): Promise<SprintData | null> {
 
 export function writeSprint(sprintId: string, data: SprintData): Promise<void> {
   return writeJson(`sprint-${sprintId}.json`, data);
+}
+
+export async function listSprints(): Promise<SprintData[]> {
+  try {
+    const files = await readdir(DATA_DIR);
+    const sprintFiles = files.filter((file) => /^sprint-.+\.json$/.test(file));
+    return (await Promise.all(sprintFiles.map((file) => readJson<SprintData | null>(file, null))))
+      .filter((sprint): sprint is SprintData => sprint !== null)
+      .sort((a, b) => b.jiraSprintId - a.jiraSprintId);
+  } catch (err: any) {
+    if (err.code === 'ENOENT') return [];
+    throw err;
+  }
 }

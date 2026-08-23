@@ -1,0 +1,839 @@
+{
+  "sprintId": "1789",
+  "jiraSprintId": 1789,
+  "sprintName": "Aug Sprint 1",
+  "sprintState": "active",
+  "tickets": [
+    {
+      "jiraId": "BRU-3731",
+      "summary": "Timeline and Network tabs do not show the actual request headers sent ",
+      "status": "IN REVIEW",
+      "team": "Silicon Squad",
+      "assignee": "Shubham Waghamore",
+      "storyPoints": 5,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3538",
+      "summary": "Collection level Sidebar border is breaking with GitUI and when switching request response layouts",
+      "status": "Peer review",
+      "team": "Commit Club",
+      "assignee": "Gopu Raju",
+      "storyPoints": 2,
+      "committed": true,
+      "baselineStatus": "Peer review",
+      "reviewStage": "Peer"
+    },
+    {
+      "jiraId": "BRU-3763",
+      "summary": "Variable Tooltip : Allow choosing variable scope",
+      "status": "In Progress",
+      "team": "Silicon Squad",
+      "assignee": "Sachin Thakur",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2280",
+      "summary": "Multi-select items in the sidebar with bulk actions",
+      "status": "In Progress",
+      "team": "Silicon Squad",
+      "assignee": "Gopi Kishore",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-1415",
+      "summary": "GitUI - In-App Pull Request Flow",
+      "status": "In Progress",
+      "team": "Commit Club",
+      "assignee": "Naman Vyas",
+      "storyPoints": 5,
+      "committed": true,
+      "baselineStatus": "In Progress"
+    },
+    {
+      "jiraId": "BRU-894",
+      "summary": "Handle naming collision across clone, create, rename and drag & drop",
+      "status": "Peer review",
+      "team": "Silicon Squad",
+      "assignee": "Sachin Thakur",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2867",
+      "summary": "Backstage: POC of Bruno Backstage Plugin",
+      "status": "PLANNING",
+      "team": "Registry Rebels",
+      "assignee": "Vineet Sharma",
+      "storyPoints": 8,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2556",
+      "summary": "Improve Git clone UX for macOS users with SSH/HTTPS authentication",
+      "status": "To Do",
+      "team": "Commit Club",
+      "assignee": "Utkarsh Rahim",
+      "storyPoints": 3,
+      "committed": true,
+      "baselineStatus": "To Do"
+    },
+    {
+      "jiraId": "BRU-3077",
+      "summary": "Apply action is still active for applied stashes, and the subsequent error in this case isn't handled in a proper manner",
+      "status": "In Progress",
+      "team": "Commit Club",
+      "assignee": "Ravindra kumawat",
+      "storyPoints": 2,
+      "committed": true,
+      "baselineStatus": "In Progress"
+    },
+    {
+      "jiraId": "BRU-3808",
+      "summary": "Postman import fails entirely when a request has maxRedirects greater than 50",
+      "status": "In Progress",
+      "team": "Code Cartel",
+      "assignee": "Prateek Sunal",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4035",
+      "summary": "QuickJS abort after bru.sendRequest() in CLI",
+      "status": "To Do",
+      "team": "Code Cartel",
+      "assignee": "Prateek Sunal",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3498",
+      "summary": "Bruno MCP Server Integration",
+      "status": "In Progress",
+      "team": "Commit Club",
+      "assignee": "Gopu Raju",
+      "storyPoints": 7,
+      "committed": true,
+      "reviewers": [
+        "Utkarsh Rahim",
+        "Siddharth Gelera"
+      ],
+      "baselineStatus": "In Progress"
+    },
+    {
+      "jiraId": "BRU-2522",
+      "summary": "Save All Button / Option in Bruno",
+      "status": "To Do",
+      "team": "Commit Club",
+      "assignee": "Ravindra kumawat",
+      "storyPoints": 4,
+      "committed": true,
+      "baselineStatus": "To Do"
+    },
+    {
+      "jiraId": "BRU-3719",
+      "summary": "Collection Docs: render gRPC requests as read-only documentation pages",
+      "status": "In Progress",
+      "team": "Registry Rebels",
+      "assignee": "sundram gupta",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3769",
+      "summary": "Collection Docs Playground: support Digest auth",
+      "status": "To Do",
+      "team": "Registry Rebels",
+      "assignee": "sundram gupta",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3939",
+      "summary": "OpenAPI Spec Viewer: throws resolver errors for `$ref` schemas when opening a request, and the error UI is broken.",
+      "status": "To Do",
+      "team": "Registry Rebels",
+      "assignee": "Arpit Nath",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4006",
+      "summary": "Collection Docs: \"Code Snippet\" button on request examples to open all snippets in a modal",
+      "status": "In Progress",
+      "team": "Registry Rebels",
+      "assignee": "Adwait Aayush",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3806",
+      "summary": "OpenAPI Spec Panel: Ability to import multi-file OpenAPI specs",
+      "status": "To Do",
+      "team": "Registry Rebels",
+      "assignee": "Adwait Aayush",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3718",
+      "summary": "Collection Docs: render GraphQL requests as read-only documentation pages",
+      "status": "To Do",
+      "team": "Registry Rebels",
+      "assignee": "Sachin Venugopalan",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3837",
+      "summary": "Collection Docs Playground: expand the safe-mode bru.* scripting API",
+      "status": "In Progress",
+      "team": "Registry Rebels",
+      "assignee": "Sachin Venugopalan",
+      "storyPoints": 5,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-1843",
+      "summary": "Add Scripting for gRPC Requests",
+      "status": "Peer review",
+      "team": "Code Cartel",
+      "assignee": "Morsh Rajendran",
+      "storyPoints": 15,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-1889",
+      "summary": "Google Cloud Secret Manager Support",
+      "status": "QA",
+      "team": "Code Cartel",
+      "assignee": "Abhishek Patil",
+      "storyPoints": 7,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2763",
+      "summary": "res.getHeader() is case-sensitive ",
+      "status": "QA",
+      "team": "Code Cartel",
+      "assignee": "Abhishek Patil",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3511",
+      "summary": "BRU to YAML Migration Option",
+      "status": "Merged",
+      "team": "Commit Club",
+      "assignee": "Naman Vyas",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-695",
+      "summary": "Rich Text Docs Editor",
+      "status": "QA",
+      "team": "Silicon Squad",
+      "assignee": "Gopi Kishore",
+      "storyPoints": 5,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3473",
+      "summary": "Syntax highlighting and language selection for code blocks in Bruno docs.",
+      "status": "Merged",
+      "team": "Silicon Squad",
+      "assignee": "Gopi Kishore",
+      "storyPoints": 5,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3777",
+      "summary": "Collection Docs Playground: resolve inherited auth (folder and request inherit from parent)",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "Sachin Venugopalan",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3764",
+      "summary": "Collection Docs Playground: add a response format selector",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "Vineet Sharma",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3795",
+      "summary": "Collection Docs playground: show field descriptions in params, headers, and variables tables",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "Sachin Venugopalan",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-1416",
+      "summary": "GitUI - Suggest Branch Creation Before Edits on Main",
+      "status": "QA",
+      "team": "Commit Club",
+      "assignee": "Ravindra kumawat",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-141",
+      "summary": "Open Multiple Collections - Monorepo",
+      "status": "UAT",
+      "team": "Commit Club",
+      "assignee": "Gopu Raju",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2573",
+      "summary": "Add “preserve scripts” option for Postman import/export",
+      "status": "UAT",
+      "team": "Commit Club",
+      "assignee": "Gopu Raju",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2228",
+      "summary": "Client Certificates at a App level",
+      "status": "UAT",
+      "team": "Code Cartel",
+      "assignee": "Morsh Rajendran",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2752",
+      "summary": "Regression: resolve npm modules from additionalContextRoots node_modules in nodevm",
+      "status": "QA",
+      "team": "Code Cartel",
+      "assignee": "Sanish Chirayath",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2643",
+      "summary": "Collection Runner - Loader still keeps running even after Cancelling the execution",
+      "status": "QA",
+      "team": "Code Cartel",
+      "assignee": "sharanabasappa dhammur",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3253",
+      "summary": "CLI: add `--global-env-var` flag to override global environment variables",
+      "status": "QA",
+      "team": "Code Cartel",
+      "assignee": "Abhishek Patil",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2508",
+      "summary": "Workspace Home does not notify about collections that fail to open",
+      "status": "QA",
+      "team": "Commit Club",
+      "assignee": "Ravindra kumawat",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3379",
+      "summary": "Apply Bruno network config (proxy, CA certs) to GitHub provider API calls",
+      "status": "QA",
+      "team": "Commit Club",
+      "assignee": "Gopu Raju",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3249",
+      "summary": "Git operations doesn't use proxy",
+      "status": "QA",
+      "team": "Commit Club",
+      "assignee": "Utkarsh Rahim",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2070",
+      "summary": "Open urls in response as request inside bruno",
+      "status": "To Do",
+      "team": "Silicon Squad",
+      "assignee": "Gopi Kishore",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3948",
+      "summary": "Variables set in req.onFail() are not persisted to subsequent requests",
+      "status": "In Progress",
+      "team": "Code Cartel",
+      "assignee": "sharanabasappa dhammur",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2461",
+      "summary": "Workspace repo created from Bruno links collections as gitlinks but Fetch doesn’t update submodule SHAs (and .gitmodules missing)",
+      "status": "Merged",
+      "team": "Commit Club",
+      "assignee": "Ravindra kumawat",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2198",
+      "summary": "POC - Investigate high CPU usage when Bruno collections are stored on WSL filesystem",
+      "status": "In Progress",
+      "team": "Silicon Squad",
+      "assignee": "Sachin Thakur",
+      "storyPoints": 8,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3691",
+      "summary": "Font size in GraphQL annotation tooltips is too large",
+      "status": "QA",
+      "team": "Registry Rebels",
+      "assignee": "Adwait Aayush",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3623",
+      "summary": "Control W does not closes the tab after saving the newly created Transient request and for JS files in the Collection",
+      "status": "QA",
+      "team": "Registry Rebels",
+      "assignee": "Adwait Aayush",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2094",
+      "summary": "Add Sorting & Drag-and-Drop Ordering for Variables Across All Scopes",
+      "status": "QA",
+      "team": "Registry Rebels",
+      "assignee": "Adwait Aayush",
+      "storyPoints": 5,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-1429",
+      "summary": "OpenAPI Import: OpenAPI import drops collection-level info.description and tag-level description",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "Adwait Aayush",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3949",
+      "summary": "Collection Docs search: include folders as navigable search results",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "sundram gupta",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3815",
+      "summary": "Move oc-docs (@opencollection/docs) into a new repository usebruno/bruno-api-docs",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "Arpit Nath",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3866",
+      "summary": "cURL import: `--data-binary` with inline JSON is misread as a file body and crashes request creation",
+      "status": "QA",
+      "team": "Silicon Squad",
+      "assignee": "Pooja Belaramani",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3874",
+      "summary": "System/PAC proxy mode adds ~2s latency per request when PAC calls myIpAddress() on firewalled networks",
+      "status": "QA",
+      "team": "Silicon Squad",
+      "assignee": "Pooja Belaramani",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3877",
+      "summary": "flow: sequential is ignored for YAML collections and omitted from Single File (YAML) export",
+      "status": "Merged",
+      "team": "Commit Club",
+      "assignee": "Naman Vyas",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2623",
+      "summary": "Replace CodeMirror Default Replace with Custom Search Replace",
+      "status": "QA",
+      "team": "Silicon Squad",
+      "assignee": "Sachin Thakur",
+      "storyPoints": 5,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3548",
+      "summary": "Add search/filter to environment selector dropdown",
+      "status": "UAT",
+      "team": "Silicon Squad",
+      "assignee": "Gopi Kishore",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2941",
+      "summary": "Authorization header leaks to third-party servers on redirect",
+      "status": "QA",
+      "team": "Silicon Squad",
+      "assignee": "Gopi Kishore",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2784",
+      "summary": "Interpolating url does not work in generate code",
+      "status": "QA",
+      "team": "Silicon Squad",
+      "assignee": "Pooja Belaramani",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3343",
+      "summary": "Snapshot UI - Persist app sidebar expand/collapse state and width",
+      "status": "UAT",
+      "team": "Silicon Squad",
+      "assignee": "Gopi Kishore",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3462",
+      "summary": "Add menu item to ignore folder",
+      "status": "UAT",
+      "team": "Commit Club",
+      "assignee": "Ravindra kumawat",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3236",
+      "summary": "Response Visualizer: handle invalid data formats gracefully instead of crashing",
+      "status": "QA",
+      "team": "Commit Club",
+      "assignee": "Ravindra kumawat",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3658",
+      "summary": "BETA: Mock servers",
+      "status": "QA",
+      "team": "Commit Club",
+      "assignee": "Utkarsh Rahim",
+      "storyPoints": 7,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2131",
+      "summary": "Git UI: Add option to select branch along with remote for Pull and Push",
+      "status": "QA",
+      "team": "Commit Club",
+      "assignee": "Utkarsh Rahim",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-971",
+      "summary": "Harden IPC Methods to not perform actions outside Collection Boundary",
+      "status": "Merged",
+      "team": "Silicon Squad",
+      "assignee": "Chirag Chandrashekhar",
+      "storyPoints": 5,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3824",
+      "summary": "WebSocket: clicking Send before the connection finishes opening creates a duplicate connection (mid-session reconnect)",
+      "status": "QA",
+      "team": "Silicon Squad",
+      "assignee": "Siddharth Gelera",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3818",
+      "summary": "Bru-Yaml Migration -> Unable to Rename, Clone, Delete Request and Git Operations causing JS Error ",
+      "status": "Merged",
+      "team": "Commit Club",
+      "assignee": "Naman Vyas",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3859",
+      "summary": "Bru to yaml migration: when we close the yml collection after migration again try to open bru collection, it shows not found for requests tab",
+      "status": "Merged",
+      "team": "Commit Club",
+      "assignee": "Naman Vyas",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3854",
+      "summary": "Bru to yml migration: After migration, file structure are changing withing the collection",
+      "status": "Merged",
+      "team": "Commit Club",
+      "assignee": "Naman Vyas",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3073",
+      "summary": "Unsynced Collections Not Included in “Fetch in Bruno” Export Causing User Confusion.",
+      "status": "IN REVIEW",
+      "team": "Commit Club",
+      "assignee": "Ravindra kumawat",
+      "storyPoints": 2,
+      "committed": true,
+      "baselineStatus": "IN REVIEW"
+    },
+    {
+      "jiraId": "BRU-3946",
+      "summary": "Collection Docs Playground: method dropdown missing TRACE/CONNECT and the \"+ Add Custom\" option",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "sundram gupta",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3956",
+      "summary": "Variables view: persist expansion state, add copy action and align table design",
+      "status": "In Progress",
+      "team": "Silicon Squad",
+      "assignee": "Pooja Belaramani",
+      "storyPoints": 5,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3984",
+      "summary": "Collection Environment (Secrets) - able to add variables with same name and added values are getting overlapped in the first variable",
+      "status": "QA",
+      "team": "Silicon Squad",
+      "assignee": "Pooja Belaramani",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4000",
+      "summary": "Collection Docs Playground: variable hover card at parity with the desktop app (highlight + inline edit)",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "sundram gupta",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3765",
+      "summary": "Collection Docs Playground: add response actions (copy, download, clear) and layout options",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "Vineet Sharma",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4002",
+      "summary": "Generate Documentation modal: default to no environments selected (safe-by-default, CLI parity)",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "Sachin Venugopalan",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4003",
+      "summary": "PLG telemetry (Desktop): free → trial → paid funnel — release tracking",
+      "status": "Merged",
+      "team": "Scale Syndicate",
+      "assignee": "Ankit sinha",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4004",
+      "summary": "Collection Docs: show the effective request (inherited auth, headers, and variables) on the request page",
+      "status": "UAT",
+      "team": "Registry Rebels",
+      "assignee": "Sachin Venugopalan",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4017",
+      "summary": "Collection Docs: Framework Integrations architecture and project-structure spike",
+      "status": "IN REVIEW",
+      "team": "Registry Rebels",
+      "assignee": "Arpit Nath",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-2528",
+      "summary": "Ability to store a default environment",
+      "status": "QA",
+      "team": "Silicon Squad",
+      "assignee": "Sachin Thakur",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4039",
+      "summary": "Add Telemetry Events in App",
+      "status": "Duplicate",
+      "team": "Scale Syndicate",
+      "assignee": "Hassan Raza",
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-1071",
+      "summary": "Persist runner responses to queryable storage",
+      "status": "In Progress",
+      "team": "Silicon Squad",
+      "assignee": "Chirag Chandrashekhar",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4054",
+      "summary": "Investigate recovery from bad state persisted by snapshot",
+      "status": "To Do",
+      "team": "Silicon Squad",
+      "assignee": "Siddharth Gelera",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4084",
+      "summary": "Sortable column header label shifts when the sort arrow appears",
+      "status": "Peer review",
+      "team": "Registry Rebels",
+      "assignee": "Adwait Aayush",
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4085",
+      "summary": "Change Collection Version modal - fields misaligned and padding too loose",
+      "status": "IN REVIEW",
+      "team": "Registry Rebels",
+      "assignee": "Adwait Aayush",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4086",
+      "summary": "Remove Runner Heap Allocation",
+      "status": "NEW",
+      "team": "Silicon Squad",
+      "assignee": "Chirag Chandrashekhar",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4087",
+      "summary": "Collection Docs: on-page table of contents for read-only docs (collection, folder, request)",
+      "status": "QA",
+      "team": "Registry Rebels",
+      "assignee": "Sachin Venugopalan",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4088",
+      "summary": "Fix gRPC cache store and reflection fetching logic",
+      "status": "Peer review",
+      "team": "Code Cartel",
+      "assignee": "Sanish Chirayath",
+      "storyPoints": 1,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3849",
+      "summary": "Variable type validation flags a template reference as a type mismatch before resolving it",
+      "status": "To Do",
+      "team": "Code Cartel",
+      "assignee": "sharanabasappa dhammur",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3061",
+      "summary": "XML Preview crashes when response has <error> root element",
+      "status": "Peer review",
+      "team": "Code Cartel",
+      "assignee": "Abhishek Patil",
+      "storyPoints": 2,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3117",
+      "summary": "Postman Import: pm.sendRequest() Promise Chains (.then/.catch) Not Translated",
+      "status": "In Progress",
+      "team": "Code Cartel",
+      "assignee": "Abhishek Patil",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3817",
+      "summary": "Add Keycloak-based OAuth2 E2E test infra to CI",
+      "status": "To Do",
+      "team": "Code Cartel",
+      "assignee": "Abhishek Patil",
+      "storyPoints": 4,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-4095",
+      "summary": "Elapsed time resets when navigating away from an in-progress streaming request",
+      "status": "To Do",
+      "team": "Code Cartel",
+      "assignee": "Sanish Chirayath",
+      "storyPoints": 3,
+      "committed": false
+    },
+    {
+      "jiraId": "BRU-3960",
+      "summary": "Importing a Postman environment fails when a variable has no \"enabled\" field",
+      "status": "In Progress",
+      "team": "Code Cartel",
+      "assignee": "Sanish Chirayath",
+      "storyPoints": 2,
+      "committed": false
+    }
+  ],
+  "capacityOverrides": [],
+  "finalizedAt": "2026-08-04T06:41:14.228Z"
+}

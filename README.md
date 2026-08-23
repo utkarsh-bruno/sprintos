@@ -5,8 +5,18 @@ source of truth for projects/boards/sprints/issues/points/status; SprintOS
 stores only what Jira doesn't: commitments, capacity, review pipeline,
 repository type, and planning metadata — in flat JSON files under `data/`.
 
-v0.1 scope: Jira connection, sprint import, team management, capacity calc.
-See root spec for the full roadmap.
+## Planning workflow
+
+1. Choose the active sprint or a future sprint and import it from Jira.
+2. Configure teams and each member's normal point capacity.
+3. Commit or defer imported work. SprintOS keeps that decision locally, so it
+   never changes Jira's backlog or sprint membership.
+4. Classify committed work as `OSS`, `Enterprise`, or `Shared`, select its
+   review stage, and record reviewers.
+5. Add temporary capacity overrides and planning notes for the selected sprint.
+
+Refreshing an import updates Jira-owned fields (summary, status, story points)
+and retains all SprintOS planning metadata.
 
 ## Develop
 
@@ -16,8 +26,12 @@ npm run dev:api   # Fastify on :4100
 npm run dev:web   # Vite on :5173, proxies /api to :4100
 ```
 
-Set Jira credentials in `data/config.json` (`jira.url`, `jira.token`) before
-importing a sprint — `PUT /api/config` also works from the UI once wired up.
+`data/config.json` holds Jira credentials, so it's gitignored — copy
+`data/config.example.json` to `data/config.json` and fill in `jira.email` and
+`jira.token`. Basic auth (email + API token), same scheme `git-jiras` uses
+against this org's Jira instance. `jira.teamField` already defaults to
+`customfield_10392`, confirmed against that same instance via `git-jiras`.
+`PUT /api/config` also works once the UI has a settings form.
 
 ## Docker (single container)
 

@@ -2,5 +2,6 @@ node_modules
 dist
 .env
 *.tsbuildinfo
+data/config.json
 data/cache/*
 !data/cache/.gitkeep

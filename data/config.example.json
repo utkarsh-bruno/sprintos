@@ -1,0 +1,9 @@
+{
+  "jira": {
+    "url": "https://usebruno.atlassian.net",
+    "email": "",
+    "token": "",
+    "teamField": "customfield_10392"
+  },
+  "teams": []
+}
