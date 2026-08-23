@@ -13,3 +13,13 @@ export {
   resolveOperationalOwner,
   ownerDisplayLabel,
 } from './domain/ownership.js';
+export {
+  ticketContentHash,
+  diffSnapshots,
+  type DiffOptions,
+} from './domain/history.js';
+export {
+  estimateReviewHours,
+  estimateMergeHours,
+  estimateImplementationHours,
+} from './domain/estimates.js';
