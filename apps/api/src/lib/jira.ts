@@ -1,10 +1,6 @@
-import type { JiraConfig, Ticket } from '@sprintos/types';
+import type { AppConfig } from '@sprintos/types';
 
-// Confirmed against this org's Jira: "Sprint" is customfield_10020, "Story
-// point estimate" is customfield_10016 (customfield_11204 covers a few
-// issues that don't use the primary field).
-const SPRINT_FIELD = 'customfield_10020';
-const STORY_POINT_FIELDS = ['customfield_10016', 'customfield_11204'];
+type JiraConfig = AppConfig['jira'];
 
 interface JiraIssue {
   key: string;
@@ -26,6 +22,15 @@ export interface JiraUserRef {
   id: string;
   name: string;
   email?: string;
+}
+
+export interface JiraIssueSnapshot {
+  jiraId: string;
+  summary?: string;
+  status?: string;
+  team?: string;
+  assignee?: string;
+  storyPoints?: number;
 }
 
 function assertConfigured(config: JiraConfig) {
@@ -75,7 +80,7 @@ export async function listSprints(config: JiraConfig): Promise<JiraSprintRef[]> 
     body: JSON.stringify({
       jql: `"Sprint" is not EMPTY ORDER BY updated DESC`,
       maxResults: 100,
-      fields: [SPRINT_FIELD]
+      fields: [config.sprintField]
     })
   });
   if (!res.ok) {
@@ -85,7 +90,7 @@ export async function listSprints(config: JiraConfig): Promise<JiraSprintRef[]> 
 
   const byId = new Map<number, JiraSprintRef>();
   for (const issue of data.issues) {
-    const sprints = (issue.fields?.[SPRINT_FIELD] as JiraSprintRef[] | undefined) ?? [];
+    const sprints = (issue.fields?.[config.sprintField] as JiraSprintRef[] | undefined) ?? [];
     for (const sprint of sprints) byId.set(sprint.id, sprint);
   }
 
@@ -127,7 +132,7 @@ export async function listUsers(config: JiraConfig, query = ''): Promise<JiraUse
   }));
 }
 
-export async function fetchSprintIssues(config: JiraConfig, jiraSprintId: number): Promise<Ticket[]> {
+export async function fetchSprintIssues(config: JiraConfig, jiraSprintId: number): Promise<JiraIssueSnapshot[]> {
   const base = jiraBase(config);
   const headers = authHeaders(config);
   const issues: JiraIssue[] = [];
@@ -154,9 +159,8 @@ export async function fetchSprintIssues(config: JiraConfig, jiraSprintId: number
     status: (issue.fields?.status as { name?: string } | undefined)?.name,
     team: teamRefs(issue.fields?.[config.teamField])[0]?.name,
     assignee: (issue.fields?.assignee as { displayName?: string } | null | undefined)?.displayName,
-    storyPoints: STORY_POINT_FIELDS.map((f) => issue.fields?.[f]).find(
-      (v): v is number => typeof v === 'number'
-    ),
-    committed: false
+    storyPoints: config.storyPointFields
+      .map((f) => issue.fields?.[f])
+      .find((v): v is number => typeof v === 'number'),
   }));
 }
