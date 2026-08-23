@@ -3,5 +3,8 @@ dist
 .env
 *.tsbuildinfo
 data/config.json
+data/sprintos.db
+data/sprintos.db-*
 data/cache/*
 !data/cache/.gitkeep
+.superpowers/
