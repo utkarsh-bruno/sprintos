@@ -1,1 +1,5 @@
-// Domain modules will be exported here as they are implemented.
+export {
+  sprintDayIndex,
+  workingDaysBetween,
+  workingDaysUntil,
+} from './domain/sprint-day.js';
