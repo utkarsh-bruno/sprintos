@@ -4,6 +4,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import staticPlugin from '@fastify/static';
 import { configRoutes } from './routes/config.js';
+import { changesRoutes } from './routes/changes.js';
 import { jiraRoutes } from './routes/jira.js';
 import { syncRoutes } from './routes/sync.js';
 import { ticketsRoutes } from './routes/tickets.js';
@@ -13,6 +14,7 @@ const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
 await app.register(configRoutes);
+await app.register(changesRoutes);
 await app.register(jiraRoutes);
 await app.register(syncRoutes);
 await app.register(ticketsRoutes);
