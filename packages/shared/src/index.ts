@@ -26,3 +26,10 @@ export {
 export { buildTicketFlags } from './domain/risk.js';
 export { buildForecast } from './domain/forecast.js';
 export { buildBrief, type BuildBriefInput } from './domain/brief.js';
+export {
+  applyPlanningOverride,
+  isExcludedFromCapacity,
+  whatIfImpact,
+  type AppliedPlanning,
+  type WhatIfImpact,
+} from './domain/planning.js';

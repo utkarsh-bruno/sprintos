@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import type { Ticket, TicketFlag } from '@sprintos/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { PlanningMode, Ticket, TicketFlag } from '@sprintos/types';
 import { api, type TicketFilter } from '../lib/api.js';
 
 const FILTERS: { value: TicketFilter; label: string }[] = [
@@ -13,6 +13,14 @@ const FILTERS: { value: TicketFilter; label: string }[] = [
   { value: 'qa', label: 'QA' },
   { value: 'blocked', label: 'Blocked' },
   { value: 'new', label: 'New' },
+];
+
+const PLANNING_MODES: { value: PlanningMode; label: string }[] = [
+  { value: 'planned', label: 'Planned' },
+  { value: 'not-touching', label: 'Not touching' },
+  { value: 'defer', label: 'Defer' },
+  { value: 'watch', label: 'Watch' },
+  { value: 'force-include', label: 'Force include' },
 ];
 
 const SEVERITY_ORDER: Record<TicketFlag['severity'], number> = {
@@ -67,12 +75,26 @@ function jiraBrowseUrl(jiraUrl: string, key: string): string {
 
 export default function Tickets() {
   const [filter, setFilter] = useState<TicketFilter>('all');
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ['tickets', filter],
     queryFn: () => api.getTickets(filter),
     retry: false,
   });
+
+  const planningMutation = useMutation({
+    mutationFn: ({ key, mode }: { key: string; mode: PlanningMode }) =>
+      api.patchTicketPlanning(key, mode),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['brief'] });
+    },
+  });
+
+  function planningModeFor(key: string): PlanningMode {
+    return data?.planningOverrides[key]?.mode ?? 'planned';
+  }
 
   return (
     <section className="panel">
@@ -112,7 +134,7 @@ export default function Tickets() {
 
       {data && data.tickets.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] text-left text-sm">
+          <table className="w-full min-w-[1080px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-800 text-xs uppercase tracking-wide text-slate-500">
                 <th className="px-5 py-3 font-medium">Key</th>
@@ -121,6 +143,7 @@ export default function Tickets() {
                 <th className="px-5 py-3 font-medium">Points</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Operational owner</th>
+                <th className="px-5 py-3 font-medium">Planning</th>
                 <th className="px-5 py-3 font-medium">Dependency</th>
                 <th className="px-5 py-3 font-medium">PR link</th>
                 <th className="px-5 py-3 font-medium">Risk</th>
@@ -131,6 +154,7 @@ export default function Tickets() {
               {data.tickets.map((ticket) => {
                 const flag = topFlag(ticket.flags);
                 const jiraUrl = jiraBrowseUrl(data.jiraUrl, ticket.key);
+                const planningMode = planningModeFor(ticket.key);
 
                 return (
                   <tr
@@ -151,6 +175,27 @@ export default function Tickets() {
                     </td>
                     <td className="whitespace-nowrap px-5 py-3">
                       {OWNER_LABELS[ticket.operationalOwner] ?? ticket.operationalOwner}
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-3">
+                      <select
+                        className="field min-w-[8.5rem] text-xs"
+                        value={planningMode}
+                        disabled={planningMutation.isPending}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          planningMutation.mutate({
+                            key: ticket.key,
+                            mode: e.target.value as PlanningMode,
+                          });
+                        }}
+                      >
+                        {PLANNING_MODES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="max-w-[10rem] truncate px-5 py-3" title={dependencyLabel(ticket)}>
                       {dependencyLabel(ticket)}

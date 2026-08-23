@@ -1,4 +1,5 @@
-import type { AppConfig, ForecastRow, Ticket } from '@sprintos/types';
+import type { AppConfig, ForecastRow, PlanningOverride, Ticket } from '@sprintos/types';
+import { isExcludedFromCapacity } from './planning.js';
 import {
   estimateImplementationHours,
   estimateMergeHours,
@@ -52,6 +53,7 @@ export function buildForecast(
   config: AppConfig,
   _sprintDay: number,
   workingDaysUntilFreeze: number,
+  planningOverrides?: Map<string, PlanningOverride>,
 ): ForecastRow[] {
   const { sprint } = config;
   const active = tickets.filter((t) => !isDoneTicket(t));
@@ -62,6 +64,10 @@ export function buildForecast(
   let qaTicketCount = 0;
 
   for (const ticket of active) {
+    const override = planningOverrides?.get(ticket.key);
+    if (isExcludedFromCapacity(override)) {
+      continue;
+    }
     if (ticket.operationalOwner === 'developer') {
       developerLoad += estimateImplementationHours(
         ticket.storyPoints,

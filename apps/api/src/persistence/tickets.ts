@@ -268,6 +268,50 @@ export function insertOwnershipEvents(events: OwnershipEvent[]): void {
   tx(events);
 }
 
+export function upsertPlanningOverride(override: PlanningOverride): void {
+  getDb()
+    .prepare(`
+      INSERT INTO planning_overrides (ticket_key, mode, note, updated_at)
+      VALUES (@ticketKey, @mode, @note, @updatedAt)
+      ON CONFLICT(ticket_key) DO UPDATE SET
+        mode = excluded.mode,
+        note = excluded.note,
+        updated_at = excluded.updated_at
+    `)
+    .run({
+      ticketKey: override.ticketKey,
+      mode: override.mode,
+      note: override.note ?? null,
+      updatedAt: override.updatedAt,
+    });
+}
+
+export function loadAllChangeEvents(): ChangeEvent[] {
+  const rows = getDb()
+    .prepare(`
+      SELECT id, ticket_key, type, before_value, after_value, detected_at
+      FROM change_events
+      ORDER BY detected_at DESC, id DESC
+    `)
+    .all() as Array<{
+      id: number;
+      ticket_key: string;
+      type: string;
+      before_value: string | null;
+      after_value: string | null;
+      detected_at: string;
+    }>;
+
+  return rows.map((row) => ({
+    id: row.id,
+    ticketKey: row.ticket_key,
+    type: row.type,
+    ...(row.before_value != null ? { beforeValue: row.before_value } : {}),
+    ...(row.after_value != null ? { afterValue: row.after_value } : {}),
+    detectedAt: row.detected_at,
+  }));
+}
+
 export function loadPlanningOverrides(): Map<string, PlanningOverride> {
   const rows = getDb().prepare('SELECT ticket_key, mode, note, updated_at FROM planning_overrides').all() as Array<{
     ticket_key: string;

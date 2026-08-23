@@ -26,6 +26,7 @@ import {
   hasSnapshotsForSprint,
   insertChangeEvents,
   insertOwnershipEvents,
+  loadPlanningOverrides,
   loadTicketsForSprint,
   startSyncRun,
   upsertSprint,
@@ -33,6 +34,10 @@ import {
 } from '../persistence/tickets.js';
 
 let cachedBrief: BriefPayload | null = null;
+
+export function clearBriefCache(): void {
+  cachedBrief = null;
+}
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -229,12 +234,14 @@ export async function runSync(): Promise<BriefPayload> {
     );
     const newTickets = tickets.filter((t) => newTicketKeys.has(t.key));
 
+    const planningOverrides = loadPlanningOverrides();
     const brief = buildBrief({
       tickets,
       changeEvents,
       config,
       syncStatus: sync,
       newTickets,
+      planningOverrides,
     });
 
     cachedBrief = brief;
@@ -278,12 +285,14 @@ export async function getLatestBrief(): Promise<BriefPayload | null> {
   );
   const newTickets = tickets.filter((t) => newTicketKeys.has(t.key));
 
+  const planningOverrides = loadPlanningOverrides();
   const brief = buildBrief({
     tickets,
     changeEvents: changed,
     config,
     syncStatus: sync,
     newTickets,
+    planningOverrides,
   });
 
   cachedBrief = brief;

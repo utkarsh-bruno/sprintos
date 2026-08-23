@@ -3,6 +3,7 @@ import type {
   BriefItem,
   BriefPayload,
   ChangeEvent,
+  PlanningOverride,
   SyncStatus,
   Ticket,
 } from '@sprintos/types';
@@ -17,6 +18,7 @@ export interface BuildBriefInput {
   config: AppConfig;
   syncStatus: SyncStatus;
   newTickets: Ticket[];
+  planningOverrides?: Map<string, PlanningOverride>;
 }
 
 function isInReviewQueue(ticket: Ticket, config: AppConfig): boolean {
@@ -108,7 +110,13 @@ export function buildBrief(input: BuildBriefInput): BriefPayload {
   const sprintDay = syncStatus.sprintDay ?? 1;
   const workingDaysUntilFreeze = syncStatus.workingDaysUntilFreeze ?? 0;
 
-  const forecast = buildForecast(tickets, config, sprintDay, workingDaysUntilFreeze);
+  const forecast = buildForecast(
+    tickets,
+    config,
+    sprintDay,
+    workingDaysUntilFreeze,
+    input.planningOverrides,
+  );
 
   const needsMe = tickets
     .filter((t) => isNeedsMe(t, config))

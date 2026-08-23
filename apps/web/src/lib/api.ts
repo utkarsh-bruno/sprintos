@@ -1,4 +1,4 @@
-import type { BriefPayload, Ticket, TicketFlag } from '@sprintos/types';
+import type { AppConfig, BriefItem, BriefPayload, ChangeEvent, PlanningMode, PlanningOverride, Ticket, TicketFlag } from '@sprintos/types';
 
 export type TicketFilter =
   | 'all'
@@ -15,6 +15,17 @@ export interface TicketsListResponse {
   filter: TicketFilter;
   jiraUrl: string;
   tickets: Ticket[];
+  planningOverrides: Record<string, PlanningOverride>;
+}
+
+export interface WhatIfImpactResponse {
+  extraLoadHours: number;
+  extraLoadByParty: Record<string, number>;
+  recommendation?: BriefItem;
+}
+
+export interface ChangesResponse {
+  events: ChangeEvent[];
 }
 
 export interface TicketDetailResponse {
@@ -45,7 +56,17 @@ export const api = {
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
   getBrief: () => request<BriefPayload>('/brief'),
   sync: () => request<BriefPayload>('/sync', { method: 'POST', body: '{}' }),
+  getChanges: () => request<ChangesResponse>('/changes'),
+  getConfig: () => request<AppConfig>('/config'),
+  putConfig: (body: Partial<AppConfig>) => request<{ ok: boolean }>('/config', { method: 'PUT', body: JSON.stringify(body) }),
   getTickets: (filter: TicketFilter = 'all') =>
     request<TicketsListResponse>(`/tickets?filter=${encodeURIComponent(filter)}`),
   getTicket: (key: string) => request<TicketDetailResponse>(`/tickets/${encodeURIComponent(key)}`),
+  patchTicketPlanning: (key: string, mode: PlanningMode, note?: string) =>
+    request<{ ok: boolean; override: PlanningOverride }>(
+      `/tickets/${encodeURIComponent(key)}/planning`,
+      { method: 'PATCH', body: JSON.stringify({ mode, ...(note ? { note } : {}) }) },
+    ),
+  getTicketWhatIf: (key: string) =>
+    request<WhatIfImpactResponse>(`/tickets/${encodeURIComponent(key)}/what-if`),
 };

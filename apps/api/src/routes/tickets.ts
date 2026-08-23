@@ -1,15 +1,18 @@
 import type { FastifyInstance } from 'fastify';
 import type { AppConfig, OwnerParty, Ticket, TicketFlag } from '@sprintos/types';
-import { buildTicketFlags, ownerDisplayLabel } from '@sprintos/shared';
+import type { PlanningMode } from '@sprintos/types';
+import { buildTicketFlags, whatIfImpact } from '@sprintos/shared';
 import { readAppConfig } from '../lib/config.js';
 import {
   getChangeEventsForSyncRun,
   getLatestSprint,
   getLatestSuccessfulSyncRun,
+  loadPlanningOverrides,
   loadTicket,
   loadTicketsForSprint,
+  upsertPlanningOverride,
 } from '../persistence/tickets.js';
-import { getSyncStatus } from '../services/sync.js';
+import { clearBriefCache, getSyncStatus } from '../services/sync.js';
 
 export type TicketFilter =
   | 'all'
@@ -21,6 +24,14 @@ export type TicketFilter =
   | 'qa'
   | 'blocked'
   | 'new';
+
+const VALID_PLANNING_MODES = new Set<PlanningMode>([
+  'planned',
+  'not-touching',
+  'defer',
+  'watch',
+  'force-include',
+]);
 
 const VALID_FILTERS = new Set<TicketFilter>([
   'all',
@@ -170,11 +181,68 @@ export async function ticketsRoutes(app: FastifyInstance) {
       newTicketKeys,
     );
 
+    const planningOverrides = loadPlanningOverrides();
+    const planningByKey = Object.fromEntries(planningOverrides);
+
     return {
       filter,
       jiraUrl: loaded.jiraUrl,
       tickets,
+      planningOverrides: planningByKey,
     };
+  });
+
+  app.patch<{ Params: { key: string }; Body: { mode?: string; note?: string } }>(
+    '/api/tickets/:key/planning',
+    async (req, reply) => {
+      const raw = loadTicket(req.params.key);
+      if (!raw) {
+        return reply.code(404).send({ error: `Ticket ${req.params.key} not found` });
+      }
+
+      const mode = req.body?.mode as PlanningMode | undefined;
+      if (!mode || !VALID_PLANNING_MODES.has(mode)) {
+        return reply.code(400).send({ error: 'Invalid planning mode' });
+      }
+
+      const override = {
+        ticketKey: req.params.key,
+        mode,
+        ...(req.body.note ? { note: req.body.note } : {}),
+        updatedAt: new Date().toISOString(),
+      };
+
+      upsertPlanningOverride(override);
+      clearBriefCache();
+
+      return { ok: true, override };
+    },
+  );
+
+  app.get<{ Params: { key: string } }>('/api/tickets/:key/what-if', async (req, reply) => {
+    const loaded = await loadEnrichedTickets();
+    if (!loaded) {
+      return reply.code(404).send({ error: 'No sprint data — run POST /api/sync first' });
+    }
+
+    const raw = loadTicket(req.params.key);
+    if (!raw) {
+      return reply.code(404).send({ error: `Ticket ${req.params.key} not found` });
+    }
+
+    const syncStatus = getSyncStatus();
+    const ticket = enrichTicket(raw, loaded.config, loaded.sprintDay);
+    const planningOverrides = loadPlanningOverrides();
+    const impact = whatIfImpact(
+      ticket,
+      loaded.tickets,
+      loaded.config,
+      loaded.sprintDay,
+      syncStatus.workingDaysUntilFreeze ?? 0,
+      planningOverrides,
+    );
+
+    return impact;
   });
 
   app.get<{ Params: { key: string } }>('/api/tickets/:key', async (req, reply) => {
