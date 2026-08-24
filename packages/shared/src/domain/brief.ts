@@ -151,14 +151,14 @@ function buildOverallAssessment(
   if (overload) {
     return {
       overallLabel: 'Day 8 Is Looking Nervous',
-      overallReason: `${overload.party} is at ${overload.utilizationPct}% capacity with ${syncStatus.workingDaysUntilFreeze ?? 0} working days until QA freeze (day ${freezeDay}).`,
+      overallReason: `${overload.party} is at ${overload.utilizationPct}% capacity with ${syncStatus.workingDaysUntilFreeze ?? 0} working days until code freeze (day ${freezeDay}).`,
     };
   }
 
   if (sprintDay > freezeDay - 2 && inProgressCount >= 3) {
     return {
       overallLabel: 'Day 8 Is Looking Nervous',
-      overallReason: `${inProgressCount} developer tickets still in progress with ${syncStatus.workingDaysUntilFreeze ?? 0} working days until QA freeze (day ${freezeDay}).`,
+      overallReason: `${inProgressCount} developer tickets still in progress with ${syncStatus.workingDaysUntilFreeze ?? 0} working days until code freeze (day ${freezeDay}).`,
     };
   }
 
